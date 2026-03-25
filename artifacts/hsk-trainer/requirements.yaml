@@ -1,0 +1,20 @@
+packages:
+  "framer-motion": "Required for smooth page transitions, 3D flashcard flip animations, and micro-interactions"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to merge tailwind classes safely"
+  "date-fns": "For formatting and calculating spaced repetition review dates"
+
+images:
+  - path: "artifacts/hsk-trainer/public/images/pattern-bg.png"
+    description: "Subtle, elegant traditional Chinese wave and cloud seamless pattern, very low contrast, warm cream background, minimal, line art"
+    aspect_ratio: "16:9"
+  - path: "artifacts/hsk-trainer/public/images/panda-mascot.png"
+    description: "Cute, minimal, premium vector illustration of a panda holding a bamboo stalk, soft lighting, clean lines, white background"
+    aspect_ratio: "1:1"
+  - path: "artifacts/hsk-trainer/public/images/lantern.png"
+    description: "Elegant, premium traditional red Chinese paper lantern with gold tassels, glowing slightly, clean background"
+    aspect_ratio: "1:1"
+
+notes:
+  - App is entirely frontend-driven with mock data in memory.
+  - Spaced repetition and user progress are stored in localStorage.

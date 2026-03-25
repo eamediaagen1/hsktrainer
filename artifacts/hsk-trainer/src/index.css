@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@400;600;700;900&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-serif: 'Noto Serif SC', serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  
+  --color-gold: hsl(var(--gold));
+  --color-gold-foreground: hsl(var(--gold-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-ring: hsl(var(--ring));
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+}
+
+:root {
+  /* Warm Cream / Parchment */
+  --background: 38 40% 96%;
+  --foreground: 20 20% 15%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 20 20% 15%;
+  
+  /* Deep Crimson Red */
+  --primary: 350 75% 42%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Amber Gold */
+  --gold: 43 90% 50%;
+  --gold-foreground: 20 20% 15%;
+
+  --muted: 38 20% 90%;
+  --muted-foreground: 20 10% 40%;
+
+  --border: 38 20% 85%;
+  --ring: 350 75% 42%;
+}
+
+.dark {
+  /* Deep Navy Charcoal */
+  --background: 220 25% 10%;
+  --foreground: 40 20% 90%;
+  
+  --card: 220 25% 14%;
+  --card-foreground: 40 20% 90%;
+  
+  /* Brighter Crimson for dark mode contrast */
+  --primary: 350 70% 55%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Bright Gold */
+  --gold: 43 90% 55%;
+  --gold-foreground: 220 25% 10%;
+
+  --muted: 220 20% 20%;
+  --muted-foreground: 220 15% 60%;
+
+  --border: 220 20% 20%;
+  --ring: 350 70% 55%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20;
+    /* Create a subtle textured overlay */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-bold;
+  }
+}
+
+@layer utilities {
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  /* Custom scrollbar for clean look */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
