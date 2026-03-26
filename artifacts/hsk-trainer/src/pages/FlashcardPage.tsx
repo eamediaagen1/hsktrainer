@@ -68,15 +68,19 @@ export default function FlashcardPage() {
     setIsFlipped(false);
   }, [currentIndex]);
 
+  // Clamp safeIndex so a stale currentIndex never exceeds the filtered word list.
+  // Without this, switching to a category with fewer words causes one crash frame
+  // before the reset-to-0 effect fires.
+  const safeIndex = levelWords.length > 0 ? Math.min(currentIndex, levelWords.length - 1) : 0;
+
   const handleSpeak = useCallback(() => {
-    if (!levelWords[currentIndex]) return;
-    const { word, pinyin } = levelWords[currentIndex];
+    const wordEntry = levelWords[safeIndex];
+    if (!wordEntry) return;
     setIsSpeaking(true);
-    speakWord(word, pinyin);
-    // reset speaking indicator
-    const totalDuration = 900 + pinyin.length * 80 + 800;
+    speakWord(wordEntry.word, wordEntry.pinyin);
+    const totalDuration = 900 + wordEntry.pinyin.length * 80 + 800;
     setTimeout(() => setIsSpeaking(false), totalDuration);
-  }, [levelWords, currentIndex]);
+  }, [levelWords, safeIndex]);
 
   if (levelWords.length === 0) {
     return (
@@ -91,9 +95,9 @@ export default function FlashcardPage() {
     );
   }
 
-  const currentWord = levelWords[currentIndex];
+  const currentWord = levelWords[safeIndex];
   const saved = isCardSaved(currentWord.id);
-  const progress = ((currentIndex + 1) / levelWords.length) * 100;
+  const progress = ((safeIndex + 1) / levelWords.length) * 100;
 
   const handleNext = () => {
     if (currentIndex < levelWords.length - 1) setCurrentIndex((p) => p + 1);
@@ -197,7 +201,7 @@ export default function FlashcardPage() {
                 )}
               </span>
               <span>
-                {currentIndex + 1} / {levelWords.length}
+                {safeIndex + 1} / {levelWords.length}
               </span>
             </div>
             <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
