@@ -1,18 +1,38 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, Star, Sparkles, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, Star, Sparkles, CheckCircle2, Volume2 } from "lucide-react";
 import { hskData } from "@/data/hskData";
 import { useStore } from "@/hooks/use-store";
 import { DecorativeBackground } from "@/components/Decorations";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Flashcard } from "@/components/Flashcard";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+function speakWord(word: string, pinyin: string) {
+  if (!("speechSynthesis" in window)) return false;
+  window.speechSynthesis.cancel();
+  const utterWord = new SpeechSynthesisUtterance(word);
+  utterWord.lang = "zh-CN";
+  utterWord.rate = 0.85;
+  window.speechSynthesis.speak(utterWord);
+  if (pinyin) {
+    const utterPinyin = new SpeechSynthesisUtterance(pinyin);
+    utterPinyin.lang = "en-US";
+    utterPinyin.rate = 0.85;
+    utterPinyin.volume = 0.8;
+    setTimeout(() => window.speechSynthesis.speak(utterPinyin), 900);
+  }
+  return true;
+}
 
 export default function ReviewPage() {
   const [, setLocation] = useLocation();
   const { savedCards, updateCardReview } = useStore();
   
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
   // Compute due cards ONCE on mount or when returning to page, so list doesn't vanish instantly upon rating
   const reviewQueue = useMemo(() => {
@@ -29,6 +49,15 @@ export default function ReviewPage() {
   useEffect(() => {
     setIsFlipped(false);
   }, [currentIndex]);
+
+  const handleSpeak = useCallback(() => {
+    if (!reviewQueue[currentIndex]) return;
+    const { word, pinyin } = reviewQueue[currentIndex];
+    setIsSpeaking(true);
+    speakWord(word, pinyin);
+    const totalDuration = 900 + pinyin.length * 80 + 800;
+    setTimeout(() => setIsSpeaking(false), totalDuration);
+  }, [reviewQueue, currentIndex]);
 
   const handleRating = (difficulty: "hard" | "good" | "easy") => {
     const wordId = reviewQueue[currentIndex].id;
@@ -108,7 +137,27 @@ export default function ReviewPage() {
                 onFlip={() => setIsFlipped(!isFlipped)}
               />
 
-              <div className="w-full max-w-sm mt-8 h-20">
+              {/* Voice button */}
+              <div className="w-full max-w-sm mt-4">
+                <button
+                  onClick={handleSpeak}
+                  disabled={!speechSupported}
+                  title={speechSupported ? "Listen to pronunciation" : "Speech not supported in this browser"}
+                  className={cn(
+                    "w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 border text-sm",
+                    speechSupported
+                      ? isSpeaking
+                        ? "bg-blue-500/15 border-blue-400/50 text-blue-600 dark:text-blue-400"
+                        : "bg-card border-border text-foreground hover:bg-blue-500/10 hover:border-blue-400/40 hover:text-blue-600 dark:hover:text-blue-400"
+                      : "bg-muted border-border text-muted-foreground cursor-not-allowed opacity-50"
+                  )}
+                >
+                  <Volume2 className={cn("w-4 h-4", isSpeaking && "animate-pulse")} />
+                  {isSpeaking ? "Playing…" : "Listen"}
+                </button>
+              </div>
+
+              <div className="w-full max-w-sm mt-4 h-20">
                 {isFlipped ? (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}

@@ -1,17 +1,18 @@
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Book, Star, LogOut } from "lucide-react";
+import { Book, Star, LogOut, Lock } from "lucide-react";
 import { useStore } from "@/hooks/use-store";
 import { DecorativeBackground } from "@/components/Decorations";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { cn } from "@/lib/utils";
 
 const levels = [
-  { id: 1, count: 150, title: "Beginner" },
-  { id: 2, count: 150, title: "Elementary" },
-  { id: 3, count: 300, title: "Intermediate" },
-  { id: 4, count: 600, title: "Upper-Intermediate" },
-  { id: 5, count: 1300, title: "Advanced" },
-  { id: 6, count: 2500, title: "Mastery" },
+  { id: 1, count: 150, title: "Beginner",           locked: false },
+  { id: 2, count: 150, title: "Elementary",          locked: true  },
+  { id: 3, count: 300, title: "Intermediate",        locked: true  },
+  { id: 4, count: 600, title: "Upper-Intermediate",  locked: true  },
+  { id: 5, count: 1300,title: "Advanced",            locked: true  },
+  { id: 6, count: 2500,title: "Mastery",             locked: true  },
 ];
 
 export default function LevelSelection() {
@@ -27,10 +28,7 @@ export default function LevelSelection() {
 
   const container = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
+    show: { opacity: 1, transition: { staggerChildren: 0.08 } }
   };
 
   const item = {
@@ -88,32 +86,70 @@ export default function LevelSelection() {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
         >
           {levels.map((level) => (
-            <motion.button
-              key={level.id}
-              variants={item}
-              onClick={() => setLocation(`/flashcards/${level.id}`)}
-              className="group relative bg-card rounded-3xl p-8 text-left border border-border hover:border-primary/50 shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden"
-            >
-              {/* Decorative corner accent */}
-              <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors duration-500" />
-              
-              <div className="relative z-10 flex flex-col h-full justify-between">
-                <div className="flex justify-between items-start mb-8">
-                  <h2 className="text-5xl font-serif font-bold text-foreground">
-                    <span className="text-2xl text-muted-foreground block font-sans mb-1 font-medium">HSK</span>
-                    {level.id}
-                  </h2>
-                  <div className="p-3 bg-muted rounded-xl group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-300">
-                    <Book className="w-6 h-6" />
+            <motion.div key={level.id} variants={item}>
+              {level.locked ? (
+                /* ── Locked card ── */
+                <div className={cn(
+                  "group relative bg-card/60 rounded-3xl p-8 text-left border border-border/40 shadow-sm overflow-hidden",
+                  "opacity-60 cursor-not-allowed select-none"
+                )}>
+                  {/* Subtle pattern overlay */}
+                  <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(0,0,0,0.02)_10px,rgba(0,0,0,0.02)_11px)] rounded-3xl" />
+                  
+                  <div className="relative z-10 flex flex-col h-full justify-between">
+                    <div className="flex justify-between items-start mb-8">
+                      <h2 className="text-5xl font-serif font-bold text-muted-foreground/60">
+                        <span className="text-2xl text-muted-foreground/40 block font-sans mb-1 font-medium">HSK</span>
+                        {level.id}
+                      </h2>
+                      <div className="p-3 bg-muted/50 rounded-xl">
+                        <Lock className="w-5 h-5 text-muted-foreground/50" />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-xl font-bold text-muted-foreground/60">{level.title}</h3>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted/80 text-muted-foreground/60 border border-border/40">
+                          Locked
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground/40">{level.count} words</p>
+                    </div>
                   </div>
                 </div>
-                
-                <div>
-                  <h3 className="text-xl font-bold text-foreground mb-1">{level.title}</h3>
-                  <p className="text-muted-foreground">{level.count} words</p>
-                </div>
-              </div>
-            </motion.button>
+              ) : (
+                /* ── Unlocked card (HSK 1) ── */
+                <button
+                  onClick={() => setLocation(`/flashcards/${level.id}`)}
+                  className="group relative w-full bg-card rounded-3xl p-8 text-left border border-border hover:border-primary/50 shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden"
+                >
+                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors duration-500" />
+                  
+                  <div className="relative z-10 flex flex-col h-full justify-between">
+                    <div className="flex justify-between items-start mb-8">
+                      <h2 className="text-5xl font-serif font-bold text-foreground">
+                        <span className="text-2xl text-muted-foreground block font-sans mb-1 font-medium">HSK</span>
+                        {level.id}
+                      </h2>
+                      <div className="p-3 bg-muted rounded-xl group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-300">
+                        <Book className="w-6 h-6" />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-xl font-bold text-foreground">{level.title}</h3>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                          Available
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground">{level.count} words</p>
+                    </div>
+                  </div>
+                </button>
+              )}
+            </motion.div>
           ))}
         </motion.div>
       </main>

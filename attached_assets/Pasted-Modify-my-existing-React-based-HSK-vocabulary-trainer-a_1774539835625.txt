@@ -1,0 +1,147 @@
+Modify my existing **React-based** HSK vocabulary trainer app.
+
+## Important
+
+* The app is already built with **React**
+* Keep it in **React**
+* Do **not** rewrite it into plain HTML/CSS/JavaScript
+* Keep the current app structure, state logic, routing/view logic, and existing features
+* Only add the requested features and content updates
+* Keep the current premium design style unless a small UI adjustment is needed for the new features
+
+## Requested changes
+
+### 1. Keep HSK 2 to HSK 6 locked
+
+Update the level selection screen so that:
+
+* **HSK 2, HSK 3, HSK 4, HSK 5, and HSK 6 remain locked**
+* Only **HSK 1** should be fully accessible
+* Locked levels should still be visible, but clearly marked as locked
+* Locked levels should not open the flashcard study screen
+* Keep the premium card layout and styling
+* Add a subtle locked-state treatment such as:
+
+  * lock icon
+  * “Locked” label
+  * reduced emphasis or disabled interaction
+* Do not remove those levels from the UI
+
+### 2. Fill HSK 1 with a full 150-word dataset
+
+Replace the small HSK 1 sample set with a **full mock dataset of 150 words**.
+
+For each HSK 1 item, include:
+
+* `word`
+* `pinyin`
+* `meaning`
+* `imageUrl`
+* `category`
+
+Use realistic mock HSK 1 vocabulary and organize the words into categories such as:
+
+* Greetings
+* Numbers
+* Family
+* Food
+* Time
+* Places
+* School
+* Daily Life
+* People
+* Verbs
+* Objects
+* Colors
+
+The dataset should stay local in the front end.
+
+### 3. Add a category sidebar inside HSK 1
+
+When the user opens **HSK 1**, add a category navigation area so the client can filter cards by category.
+
+#### Requirements
+
+* On desktop: show a left sidebar
+* On mobile: convert it into a horizontal scrollable category bar or compact dropdown
+* Include an **All Categories** option
+* Clicking a category filters the visible HSK 1 cards
+* The active category should be visually highlighted
+* The category UI should match the current premium design
+
+#### Behavior
+
+* This filtering should apply to HSK 1
+* It should work with the existing flashcard flow
+* Progress count and progress bar should update correctly based on the filtered set
+* Review mode should still work cleanly
+
+### 4. Add a “Listen to Voice” option
+
+Add a voice playback feature for the current flashcard.
+
+#### Requirements
+
+* Add a button such as:
+
+  * `🔊 Listen`
+  * or a speaker icon button
+* Use front-end only browser functionality
+* Use the **SpeechSynthesis API**
+* When clicked, read:
+
+  * the Chinese word
+  * optionally the pinyin after a short pause
+
+#### Behavior
+
+* It should work for the currently visible flashcard
+* It should work in study mode and review mode
+* If speech is not supported, show a graceful fallback message
+* Keep the button visually minimal and aligned with the current controls
+
+## Technical requirements
+
+* Keep the code in **React**
+* Preserve existing components where possible
+* Refactor cleanly if needed, but do not break existing logic
+* Keep mock data only
+* No backend
+* No unnecessary libraries
+* Keep code easy to extend
+
+## Design requirements
+
+Do not redesign the whole app. Extend the current design carefully:
+
+* warm cream background
+* elegant red and gold accents
+* minimal centered content
+* clean spacing
+* soft rounded cards
+* refined typography
+* calm learning experience
+
+The new sidebar and voice button should feel integrated, not tacked on.
+
+## Do not break
+
+* flashcard flip
+* save for review
+* review mode
+* level switching
+* progress bar
+* current navigation / screen flow
+* dark mode if already implemented
+
+## Output
+
+Return the updated React code only.
+
+Focus on these exact changes:
+
+1. **keep HSK 2–HSK 6 locked**
+2. expand HSK 1 to a full 150-word mock dataset
+3. add category filtering inside HSK 1
+4. add a listen-to-voice feature using browser speech
+5. keep the current design and logic intact
