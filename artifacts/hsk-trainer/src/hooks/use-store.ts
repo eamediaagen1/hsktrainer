@@ -21,6 +21,23 @@ export function useStore() {
     return {};
   });
 
+  /**
+   * isPaid — whether the user has purchased premium access.
+   *
+   * Currently backed by localStorage. After a successful Gumroad purchase the
+   * LandingPage calls GET /api/check-access and, if the server returns
+   * { isPaid: true }, calls unlockPremium() which sets this flag.
+   *
+   * When Supabase is configured, replace the localStorage read/write here with
+   * a call to supabase.auth.getUser() and check the `is_paid` column on the
+   * `profiles` table.
+   */
+  const [isPaid, setIsPaid] = useState<boolean>(() => {
+    return typeof window !== "undefined"
+      ? localStorage.getItem("hsk_is_paid") === "true"
+      : false;
+  });
+
   useEffect(() => {
     if (email) {
       localStorage.setItem("hsk_email", email);
@@ -33,8 +50,13 @@ export function useStore() {
     localStorage.setItem("hsk_saved_cards", JSON.stringify(savedCards));
   }, [savedCards]);
 
+  useEffect(() => {
+    localStorage.setItem("hsk_is_paid", isPaid ? "true" : "false");
+  }, [isPaid]);
+
   const login = (newEmail: string) => setEmail(newEmail);
   const logout = () => setEmail(null);
+  const unlockPremium = () => setIsPaid(true);
 
   const toggleSaveCard = (id: string) => {
     setSavedCards((prev) => {
@@ -51,19 +73,18 @@ export function useStore() {
   const updateCardReview = (id: string, difficulty: "hard" | "good" | "easy") => {
     setSavedCards((prev) => {
       const card = prev[id];
-      if (!card) return prev; // Ignore if not saved
-      
+      if (!card) return prev;
+
       let newInterval = card.interval;
       if (difficulty === "hard") newInterval = 1;
       else if (difficulty === "good") newInterval = Math.max(3, card.interval * 2);
       else if (difficulty === "easy") newInterval = Math.max(7, card.interval * 3);
 
-      // Add days in milliseconds
       const nextReview = Date.now() + newInterval * 24 * 60 * 60 * 1000;
-      
+
       return {
         ...prev,
-        [id]: { ...card, interval: newInterval, nextReview }
+        [id]: { ...card, interval: newInterval, nextReview },
       };
     });
   };
@@ -79,8 +100,10 @@ export function useStore() {
 
   return {
     email,
+    isPaid,
     login,
     logout,
+    unlockPremium,
     savedCards,
     toggleSaveCard,
     updateCardReview,

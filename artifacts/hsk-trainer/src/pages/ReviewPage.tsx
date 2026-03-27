@@ -8,23 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Flashcard } from "@/components/Flashcard";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-
-function speakWord(word: string, pinyin: string) {
-  if (!("speechSynthesis" in window)) return false;
-  window.speechSynthesis.cancel();
-  const utterWord = new SpeechSynthesisUtterance(word);
-  utterWord.lang = "zh-CN";
-  utterWord.rate = 0.85;
-  window.speechSynthesis.speak(utterWord);
-  if (pinyin) {
-    const utterPinyin = new SpeechSynthesisUtterance(pinyin);
-    utterPinyin.lang = "en-US";
-    utterPinyin.rate = 0.85;
-    utterPinyin.volume = 0.8;
-    setTimeout(() => window.speechSynthesis.speak(utterPinyin), 900);
-  }
-  return true;
-}
+import { speakChinese } from "@/lib/speech";
 
 export default function ReviewPage() {
   const [, setLocation] = useLocation();
@@ -51,12 +35,14 @@ export default function ReviewPage() {
   }, [currentIndex]);
 
   const handleSpeak = useCallback(() => {
-    if (!reviewQueue[currentIndex]) return;
-    const { word, pinyin } = reviewQueue[currentIndex];
-    setIsSpeaking(true);
-    speakWord(word, pinyin);
-    const totalDuration = 900 + pinyin.length * 80 + 800;
-    setTimeout(() => setIsSpeaking(false), totalDuration);
+    const entry = reviewQueue[currentIndex];
+    if (!entry) return;
+    const didSpeak = speakChinese(entry.word);
+    if (didSpeak) {
+      setIsSpeaking(true);
+      const ms = 400 + entry.word.length * 120 + 200;
+      setTimeout(() => setIsSpeaking(false), ms);
+    }
   }, [reviewQueue, currentIndex]);
 
   const handleRating = (difficulty: "hard" | "good" | "easy") => {

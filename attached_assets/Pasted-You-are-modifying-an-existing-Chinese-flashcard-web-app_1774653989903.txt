@@ -1,0 +1,38 @@
+You are modifying an existing Chinese flashcard web app built with Supabase. Apply the following changes carefully without altering any existing core logic, styling, or database schema unless strictly necessary. Follow security best practices throughout.
+
+1. TRIVIA QUIZ SECTION
+
+Add a trivia quiz section above each vocabulary level.
+Each quiz must be fully randomized — questions, order, and answer choices must change every time the user starts or replays the quiz.
+Questions should test vocabulary knowledge appropriate to the level (e.g. character → meaning, pinyin → character, etc.).
+At the end of the quiz, display the final score (e.g. "8 / 10").
+Include a "Replay" button that regenerates a completely new random quiz.
+If the score is above 90%, display a clear "Passed ✓" badge or indicator.
+
+
+2. BUG FIX — Text-to-Speech
+
+Fix the bug where clicking the listen/audio button triggers the speech twice.
+The TTS must read only the Chinese character, never the pinyin. Strip or exclude pinyin from the speech input string before calling the speech synthesis API.
+
+
+3. EMAIL VERIFICATION + GUMROAD PAYMENT GATE (Supabase-ready)
+
+Set up the email verification flow to be ready for Supabase Auth.
+After a user signs up, they must verify their email before accessing the app.
+Add a Gumroad webhook endpoint (e.g. /api/gumroad-webhook) that:
+
+Receives a POST request from Gumroad on successful sale.
+Validates the payload (check sale_id, product_permalink, and a shared secret from environment variables — never hardcode secrets).
+On valid payment, updates the user's Supabase profile (e.g. sets is_paid = true or assigns a paid role) so access is granted automatically.
+
+
+Protect all premium content behind a check for this is_paid flag pulled from Supabase.
+Never expose the Gumroad webhook secret or Supabase service role key on the client side — all validation must happen server-side.
+
+
+RULES:
+
+Do not rewrite or restructure existing components unless the change requires it.
+Keep all environment variables in .env and never commit them.
+Do not modify existing Supabase table schemas unless you add only a safe, non-breaking new column (e.g. is_paid boolean default false).

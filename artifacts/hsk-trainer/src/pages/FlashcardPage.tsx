@@ -7,6 +7,7 @@ import { DecorativeBackground } from "@/components/Decorations";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Flashcard } from "@/components/Flashcard";
 import { cn } from "@/lib/utils";
+import { speakChinese } from "@/lib/speech";
 
 const ALL_CATEGORIES = "All";
 
@@ -15,24 +16,6 @@ function getCategories(words: typeof hskData): string[] {
     .map((w) => w.category)
     .filter((c): c is string => Boolean(c));
   return [ALL_CATEGORIES, ...Array.from(new Set(cats))];
-}
-
-function speakWord(word: string, pinyin: string) {
-  if (!("speechSynthesis" in window)) return false;
-  window.speechSynthesis.cancel();
-  const utterWord = new SpeechSynthesisUtterance(word);
-  utterWord.lang = "zh-CN";
-  utterWord.rate = 0.85;
-  window.speechSynthesis.speak(utterWord);
-  if (pinyin) {
-    const utterPinyin = new SpeechSynthesisUtterance(pinyin);
-    utterPinyin.lang = "en-US";
-    utterPinyin.rate = 0.85;
-    utterPinyin.volume = 0.8;
-    // Short pause then pinyin
-    setTimeout(() => window.speechSynthesis.speak(utterPinyin), 900);
-  }
-  return true;
 }
 
 export default function FlashcardPage() {
@@ -76,10 +59,13 @@ export default function FlashcardPage() {
   const handleSpeak = useCallback(() => {
     const wordEntry = levelWords[safeIndex];
     if (!wordEntry) return;
-    setIsSpeaking(true);
-    speakWord(wordEntry.word, wordEntry.pinyin);
-    const totalDuration = 900 + wordEntry.pinyin.length * 80 + 800;
-    setTimeout(() => setIsSpeaking(false), totalDuration);
+    const didSpeak = speakChinese(wordEntry.word);
+    if (didSpeak) {
+      setIsSpeaking(true);
+      // Estimate spoken duration: ~400ms base + ~120ms per character
+      const ms = 400 + wordEntry.word.length * 120 + 200;
+      setTimeout(() => setIsSpeaking(false), ms);
+    }
   }, [levelWords, safeIndex]);
 
   if (levelWords.length === 0) {

@@ -8,6 +8,7 @@ import LandingPage from "@/pages/LandingPage";
 import LevelSelection from "@/pages/LevelSelection";
 import FlashcardPage from "@/pages/FlashcardPage";
 import ReviewPage from "@/pages/ReviewPage";
+import QuizPage from "@/pages/QuizPage";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/levels" component={LevelSelection} />
       <Route path="/flashcards/:level" component={FlashcardPage} />
+      <Route path="/quiz/:level" component={QuizPage} />
       <Route path="/review" component={ReviewPage} />
       <Route component={NotFound} />
     </Switch>
