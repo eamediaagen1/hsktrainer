@@ -1,0 +1,74 @@
+Improve the quiz image system in my Chinese learning flashcards web app.
+
+Important constraints:
+- Do NOT change the essential structure, main learning flow, or core app behavior.
+- Keep the existing quiz system working.
+- Make the smallest clean changes possible.
+- Keep the UI simple, fast, and mobile-friendly.
+- Improve learning quality and clarity, not just visual appearance.
+
+GOAL
+Make quiz images better, more educational, and more consistent.
+
+CHANGES TO IMPLEMENT
+
+1) Better image quality and consistency
+- Upgrade quiz images so they look clean, sharp, and visually consistent across the app.
+- Use a consistent style for all quiz images.
+- Avoid mixing random image styles that make the app feel messy.
+- Images should support learning and recognition, not distract the user.
+
+2) Images should help memorization
+- For vocabulary quizzes, use images that clearly represent the meaning of the word.
+- Prefer simple, direct, easy-to-recognize visuals.
+- Avoid vague, abstract, confusing, or overly detailed images.
+- Make sure the image matches the vocabulary meaning as closely as possible.
+
+3) Smarter image fallback
+- If an image is missing or broken, show a clean fallback state instead of an ugly broken image.
+- Fallback can be:
+  - a placeholder card
+  - an icon
+  - the word itself in a styled block
+- The layout should remain stable even when no image exists.
+
+4) Better quiz image layout
+- Improve the image display inside quiz cards:
+  - proper spacing
+  - rounded corners if the app already uses them
+  - consistent size/aspect ratio
+  - no stretching or squashing
+- Make images responsive for mobile and desktop.
+- Prevent layout shift while images load.
+
+5) Optional image-based question mode
+- Add or improve a quiz mode where the user sees an image and chooses the correct Chinese word/meaning.
+- Keep this optional and well integrated with the existing quiz system.
+- Shuffle answer choices randomly.
+
+6) Performance
+- Optimize images for fast loading.
+- Use lazy loading where appropriate.
+- Use properly sized images instead of huge files.
+- Avoid slowing down quiz performance.
+
+7) Accessibility
+- Add proper alt text for quiz images.
+- Make image questions usable and understandable even if the image fails to load.
+- Keep contrast and readability strong.
+
+8) Security / safety
+- Sanitize image URLs if remote images are used.
+- Do not trust arbitrary unvalidated user-provided image URLs.
+- Prefer approved/local/storage-hosted image sources.
+- Prevent unsafe rendering patterns.
+
+DELIVERABLES
+Please provide:
+1. the code changes
+2. any data/model updates if needed
+3. any new image component or helper logic
+4. a short explanation of how image quality, fallback, responsiveness, and performance were improved
+
+Work with the existing stack and patterns already used in the project.
+Do not refactor unrelated parts.

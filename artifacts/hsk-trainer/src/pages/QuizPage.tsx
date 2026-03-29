@@ -1,30 +1,52 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import { ChevronLeft, RotateCcw, CheckCircle2, XCircle, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { hskData, VocabWord } from "@/data/hskData";
 import { DecorativeBackground } from "@/components/Decorations";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { VocabImage } from "@/components/VocabImage";
 import { cn } from "@/lib/utils";
 
-type QuestionType = "char-to-meaning" | "meaning-to-char" | "pinyin-to-char";
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type QuestionType =
+  | "char-to-meaning"   // show character → pick English meaning
+  | "meaning-to-char"   // show English meaning → pick character
+  | "pinyin-to-char"    // show pinyin → pick character
+  | "image-to-meaning"  // show image → pick English meaning  (NEW)
+  | "image-to-char";    // show image → pick character        (NEW)
 
 interface Question {
   type: QuestionType;
   word: VocabWord;
+  /** Text displayed in the prompt card (empty for image-based types) */
   prompt: string;
   choices: string[];
   correctAnswer: string;
 }
 
+// ─── Constants ──────────────────────────────────────────────────────────────
+
 const QUIZ_SIZE = 10;
 const PASS_THRESHOLD = 0.9;
 
 const QUESTION_LABELS: Record<QuestionType, string> = {
-  "char-to-meaning": "What does this character mean?",
-  "meaning-to-char": "Which character matches this meaning?",
-  "pinyin-to-char": "Which character matches this pronunciation?",
+  "char-to-meaning":  "What does this character mean?",
+  "meaning-to-char":  "Which character matches this meaning?",
+  "pinyin-to-char":   "Which character matches this pronunciation?",
+  "image-to-meaning": "What does this image represent?",
+  "image-to-char":    "Which character names what you see?",
 };
+
+/** Only these hosts are trusted for image display */
+const ALLOWED_IMAGE_HOSTS = new Set(["images.unsplash.com", "source.unsplash.com", "plus.unsplash.com"]);
+
+function isSafeUrl(url: string): boolean {
+  try { return ALLOWED_IMAGE_HOSTS.has(new URL(url).hostname); } catch { return false; }
+}
+
+// ─── Quiz generation ─────────────────────────────────────────────────────────
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
@@ -32,33 +54,57 @@ function shuffle<T>(arr: T[]): T[] {
 
 function generateQuiz(words: VocabWord[]): Question[] {
   const pool = shuffle(words).slice(0, Math.min(QUIZ_SIZE, words.length));
+
   return pool.map((word) => {
-    const types: QuestionType[] = ["char-to-meaning", "meaning-to-char", "pinyin-to-char"];
-    const type = types[Math.floor(Math.random() * types.length)];
+    const hasImage = isSafeUrl(word.imageUrl);
+
+    // Build the candidate type list. Image-based types are only included when
+    // the word has a valid, trusted image URL.
+    const baseTypes: QuestionType[] = ["char-to-meaning", "meaning-to-char", "pinyin-to-char"];
+    const imageTypes: QuestionType[] = hasImage ? ["image-to-meaning", "image-to-char"] : [];
+    const allTypes = [...baseTypes, ...imageTypes];
+
+    const type = allTypes[Math.floor(Math.random() * allTypes.length)];
     const others = shuffle(words.filter((w) => w.id !== word.id));
 
-    let prompt: string;
+    let prompt = "";
     let correctAnswer: string;
     let distractors: string[];
 
-    if (type === "char-to-meaning") {
-      prompt = word.word;
-      correctAnswer = word.meaning;
-      distractors = others.slice(0, 3).map((w) => w.meaning);
-    } else if (type === "meaning-to-char") {
-      prompt = word.meaning;
-      correctAnswer = word.word;
-      distractors = others.slice(0, 3).map((w) => w.word);
-    } else {
-      prompt = word.pinyin;
-      correctAnswer = word.word;
-      distractors = others.slice(0, 3).map((w) => w.word);
+    switch (type) {
+      case "char-to-meaning":
+        prompt = word.word;
+        correctAnswer = word.meaning;
+        distractors = others.slice(0, 3).map((w) => w.meaning);
+        break;
+      case "meaning-to-char":
+        prompt = word.meaning;
+        correctAnswer = word.word;
+        distractors = others.slice(0, 3).map((w) => w.word);
+        break;
+      case "pinyin-to-char":
+        prompt = word.pinyin;
+        correctAnswer = word.word;
+        distractors = others.slice(0, 3).map((w) => w.word);
+        break;
+      case "image-to-meaning":
+        // prompt is empty — image is shown from word.imageUrl
+        correctAnswer = word.meaning;
+        distractors = others.slice(0, 3).map((w) => w.meaning);
+        break;
+      case "image-to-char":
+        // prompt is empty — image is shown from word.imageUrl
+        correctAnswer = word.word;
+        distractors = others.slice(0, 3).map((w) => w.word);
+        break;
     }
 
     const choices = shuffle([correctAnswer, ...distractors]);
     return { type, word, prompt, choices, correctAnswer };
   });
 }
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function QuizPage() {
   const [, setLocation] = useLocation();
@@ -82,9 +128,7 @@ export default function QuizPage() {
     (choice: string) => {
       if (isAnswered) return;
       setSelected(choice);
-      if (choice === currentQuestion.correctAnswer) {
-        setScore((s) => s + 1);
-      }
+      if (choice === currentQuestion.correctAnswer) setScore((s) => s + 1);
     },
     [isAnswered, currentQuestion]
   );
@@ -121,6 +165,10 @@ export default function QuizPage() {
     );
   }
 
+  const isImageQuestion =
+    currentQuestion.type === "image-to-meaning" ||
+    currentQuestion.type === "image-to-char";
+
   return (
     <div className="min-h-screen flex flex-col relative">
       <DecorativeBackground />
@@ -152,11 +200,11 @@ export default function QuizPage() {
               transition={{ duration: 0.25 }}
               className="w-full"
             >
-              {/* Progress bar */}
-              <div className="mb-6">
+              {/* Progress */}
+              <div className="mb-5">
                 <div className="flex justify-between text-sm font-medium text-muted-foreground mb-2">
-                  <span>{QUESTION_LABELS[currentQuestion.type]}</span>
-                  <span className="tabular-nums">
+                  <span className="truncate pr-4">{QUESTION_LABELS[currentQuestion.type]}</span>
+                  <span className="tabular-nums shrink-0">
                     {currentIndex + 1} / {questions.length}
                   </span>
                 </div>
@@ -168,23 +216,59 @@ export default function QuizPage() {
                 </div>
               </div>
 
-              {/* Prompt card */}
-              <div className="bg-card border border-border/50 rounded-3xl p-10 shadow-lg mb-6 text-center relative overflow-hidden">
+              {/* ── Prompt card ── */}
+              <div className="bg-card border border-border/50 rounded-3xl shadow-lg mb-5 relative overflow-hidden">
                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-gold to-primary" />
-                {currentQuestion.type === "char-to-meaning" ? (
-                  <p className="text-8xl font-serif text-foreground leading-none">{currentQuestion.prompt}</p>
-                ) : currentQuestion.type === "pinyin-to-char" ? (
-                  <p className="text-3xl font-medium text-primary tracking-widest">{currentQuestion.prompt}</p>
+
+                {isImageQuestion ? (
+                  /* Full-bleed image for image-based questions */
+                  <VocabImage
+                    imageUrl={currentQuestion.word.imageUrl}
+                    alt={currentQuestion.word.meaning}
+                    word={currentQuestion.word.word}
+                    size="hero"
+                    className="rounded-none rounded-3xl"
+                  />
                 ) : (
-                  <p className="text-3xl font-bold text-foreground">{currentQuestion.prompt}</p>
+                  <div className="p-8 text-center">
+                    {currentQuestion.type === "char-to-meaning" && (
+                      <>
+                        <p className="text-8xl font-serif text-foreground leading-none mb-4">
+                          {currentQuestion.prompt}
+                        </p>
+                        {/* Small image thumbnail — reinforces visual-character link */}
+                        {isSafeUrl(currentQuestion.word.imageUrl) && (
+                          <div className="flex justify-center mt-4">
+                            <VocabImage
+                              imageUrl={currentQuestion.word.imageUrl}
+                              alt={currentQuestion.word.meaning}
+                              word={currentQuestion.word.word}
+                              size="thumb"
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {currentQuestion.type === "pinyin-to-char" && (
+                      <p className="text-3xl font-medium text-primary tracking-widest">
+                        {currentQuestion.prompt}
+                      </p>
+                    )}
+                    {currentQuestion.type === "meaning-to-char" && (
+                      <p className="text-3xl font-bold text-foreground">
+                        {currentQuestion.prompt}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
 
-              {/* Choices */}
+              {/* ── Choices ── */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {currentQuestion.choices.map((choice, i) => {
                   const isThisSelected = selected === choice;
                   const isThisCorrect = choice === currentQuestion.correctAnswer;
+
                   let choiceStyle =
                     "bg-card border-border text-foreground hover:border-primary/50 hover:bg-primary/5";
                   if (isAnswered) {
@@ -192,12 +276,17 @@ export default function QuizPage() {
                       choiceStyle =
                         "bg-green-500/10 border-green-500/60 text-green-700 dark:text-green-400 shadow-sm shadow-green-500/10";
                     } else if (isThisSelected) {
-                      choiceStyle =
-                        "bg-destructive/10 border-destructive/50 text-destructive";
+                      choiceStyle = "bg-destructive/10 border-destructive/50 text-destructive";
                     } else {
                       choiceStyle = "bg-card border-border/40 text-muted-foreground opacity-60";
                     }
                   }
+
+                  // Characters are rendered larger regardless of question type
+                  const isCharChoice =
+                    currentQuestion.type === "image-to-char" ||
+                    currentQuestion.type === "meaning-to-char" ||
+                    currentQuestion.type === "pinyin-to-char";
 
                   return (
                     <motion.button
@@ -214,7 +303,7 @@ export default function QuizPage() {
                       <span className="shrink-0 w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-xs font-bold text-muted-foreground">
                         {String.fromCharCode(65 + i)}
                       </span>
-                      <span className={cn("flex-1", currentQuestion.type === "meaning-to-char" && "text-2xl font-serif")}>
+                      <span className={cn("flex-1", isCharChoice && "text-2xl font-serif")}>
                         {choice}
                       </span>
                       {isAnswered && isThisCorrect && (
@@ -228,7 +317,7 @@ export default function QuizPage() {
                 })}
               </div>
 
-              {/* Feedback + Next */}
+              {/* ── Feedback + Next ── */}
               <AnimatePresence>
                 {isAnswered && (
                   <motion.div
@@ -236,13 +325,28 @@ export default function QuizPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-5 flex flex-col items-center gap-3"
                   >
+                    {/* For image questions, also reveal the character + pinyin */}
+                    {isImageQuestion && (
+                      <div className="flex items-center gap-3 bg-muted/60 px-5 py-3 rounded-xl text-sm text-muted-foreground">
+                        <span className="text-2xl font-serif text-foreground">
+                          {currentQuestion.word.word}
+                        </span>
+                        <span>{currentQuestion.word.pinyin}</span>
+                        <span>—</span>
+                        <span>{currentQuestion.word.meaning}</span>
+                      </div>
+                    )}
                     <p
                       className={cn(
                         "text-sm font-semibold",
-                        isCorrect ? "text-green-600 dark:text-green-400" : "text-destructive"
+                        isCorrect
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-destructive"
                       )}
                     >
-                      {isCorrect ? "✓ Correct!" : `✗ Correct answer: ${currentQuestion.correctAnswer}`}
+                      {isCorrect
+                        ? "✓ Correct!"
+                        : `✗ Correct answer: ${currentQuestion.correctAnswer}`}
                     </p>
                     <button
                       onClick={handleNext}
@@ -255,7 +359,7 @@ export default function QuizPage() {
               </AnimatePresence>
             </motion.div>
           ) : (
-            /* Result screen */
+            /* ── Result screen ── */
             <motion.div
               key="result"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -265,7 +369,6 @@ export default function QuizPage() {
               <div className="bg-card border border-border/50 rounded-3xl p-10 shadow-xl text-center relative overflow-hidden">
                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-gold to-primary" />
 
-                {/* Icon */}
                 <div
                   className={cn(
                     "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6",
@@ -285,7 +388,6 @@ export default function QuizPage() {
                   Quiz Complete!
                 </h2>
 
-                {/* Score */}
                 <p className="text-6xl font-bold text-foreground my-6 tabular-nums">
                   {score}
                   <span className="text-3xl text-muted-foreground font-normal">
@@ -293,8 +395,7 @@ export default function QuizPage() {
                   </span>
                 </p>
 
-                {/* Passed badge */}
-                {isPassing && (
+                {isPassing ? (
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -304,27 +405,21 @@ export default function QuizPage() {
                     <CheckCircle2 className="w-4 h-4" />
                     Passed ✓
                   </motion.div>
-                )}
-                {!isPassing && (
+                ) : (
                   <p className="text-sm text-muted-foreground mb-6">
                     Score 90% or above to pass. Keep practicing!
                   </p>
                 )}
 
-                {/* Percentage bar */}
                 <div className="w-full bg-muted rounded-full h-3 mb-8 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${(score / questions.length) * 100}%` }}
                     transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-                    className={cn(
-                      "h-full rounded-full",
-                      isPassing ? "bg-green-500" : "bg-primary"
-                    )}
+                    className={cn("h-full rounded-full", isPassing ? "bg-green-500" : "bg-primary")}
                   />
                 </div>
 
-                {/* Buttons */}
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={handleReplay}
