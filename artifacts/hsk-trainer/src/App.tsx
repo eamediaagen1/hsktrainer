@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
+import MarketingPage from "@/pages/MarketingPage";
 import LandingPage from "@/pages/LandingPage";
 import LevelSelection from "@/pages/LevelSelection";
 import FlashcardPage from "@/pages/FlashcardPage";
@@ -15,7 +16,8 @@ const queryClient = new QueryClient();
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={LandingPage} />
+      <Route path="/" component={MarketingPage} />
+      <Route path="/app" component={LandingPage} />
       <Route path="/levels" component={LevelSelection} />
       <Route path="/flashcards/:level" component={FlashcardPage} />
       <Route path="/quiz/:level" component={QuizPage} />
