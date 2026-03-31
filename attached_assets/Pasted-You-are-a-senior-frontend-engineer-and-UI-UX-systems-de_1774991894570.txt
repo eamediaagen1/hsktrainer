@@ -1,0 +1,109 @@
+You are a senior frontend engineer and UI/UX systems designer.
+
+I have a web app dashboard called "HSK Trainer". As I add more pages and features, the UI becomes less responsive, more chaotic, and inconsistent. I want you to refactor the entire app structure so it feels clean, scalable, responsive, and system-based.
+
+GOAL:
+Fix the full frontend so all pages work together as one polished product.
+
+MAIN PROBLEMS TO SOLVE:
+- Layout becomes messy when new pages are added
+- Spacing, sizing, and alignment are inconsistent
+- Components do not scale well across screen sizes
+- Too many visual styles create chaos
+- Dashboard pages feel disconnected
+- Mobile and tablet responsiveness are weak
+- Navigation becomes crowded
+- Cards, buttons, and sections do not follow one design system
+
+YOUR TASK:
+Redesign and refactor the app with a consistent design system and responsive layout architecture.
+
+REQUIREMENTS:
+
+1. GLOBAL DESIGN SYSTEM
+- Create a unified spacing system
+- Create consistent typography hierarchy
+- Create reusable button, card, input, badge, and section styles
+- Use one border radius system
+- Use one shadow system
+- Use a limited color palette
+- Keep the style minimal, premium, and calm
+
+2. RESPONSIVE LAYOUT SYSTEM
+- Use a strong layout grid
+- Make all pages responsive for mobile, tablet, laptop, and desktop
+- Prevent overflow, broken alignment, and cramped sections
+- Standardize max widths and container behavior
+- Ensure cards stack properly on smaller screens
+- Make navigation adapt cleanly on mobile
+
+3. INFORMATION ARCHITECTURE
+- Organize pages so they feel connected, not random
+- Group features logically:
+  - Dashboard
+  - Flashcards
+  - Quiz
+  - Phrases
+  - Stroke Learning
+  - Review Mode
+  - Progress
+  - Settings
+- Reduce clutter
+- Improve visual hierarchy on every page
+
+4. COMPONENT CONSISTENCY
+- Rebuild repeated UI patterns into reusable components
+- Standardize page headers, section titles, empty states, CTA areas, and navigation
+- Ensure every page uses the same layout rhythm
+
+5. DASHBOARD + PAGE CLEANUP
+- Fix crowded layouts
+- Improve whitespace
+- Remove unnecessary visual noise
+- Make each page feel focused on one main action
+- Keep secondary actions less visually dominant
+
+6. MOBILE-FIRST IMPROVEMENTS
+- Build with mobile-first responsiveness
+- Sidebar should become a drawer on small screens
+- Buttons should stay tappable
+- Text should remain readable
+- Avoid dense multi-column layouts on mobile
+
+7. UX IMPROVEMENTS
+- Clear page structure
+- Better alignment
+- Better visual balance
+- Better CTA placement
+- Smooth interaction states
+- Make the app feel calm, modern, and easy to navigate
+
+8. TECHNICAL REFACTOR
+- Use React + Tailwind
+- Create reusable layout wrappers and UI primitives
+- Standardize breakpoints
+- Remove hard-coded inconsistent widths/heights
+- Avoid random padding/margin usage
+- Prefer reusable utility patterns over one-off styling
+
+9. OUTPUT FORMAT
+Provide:
+- a full UI/UX improvement plan
+- the design system rules
+- the responsive layout rules
+- the recommended app shell structure
+- reusable component structure
+- refactored React + Tailwind examples for the main layout, sidebar, page container, cards, and responsive grids
+
+DESIGN STYLE:
+- Clean
+- Modern
+- Slightly premium
+- Focused learning product
+- Similar level of polish as Linear, Notion, or modern SaaS dashboards
+- Match the calm aesthetic of the current HSK Trainer interface
+
+IMPORTANT:
+Do not just make it prettier.
+Fix the system so future pages can be added without breaking responsiveness or creating chaos.
+Think like a product designer and scalable frontend architect.

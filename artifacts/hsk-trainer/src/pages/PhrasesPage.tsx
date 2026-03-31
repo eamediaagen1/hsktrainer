@@ -1,16 +1,14 @@
 import { motion } from "framer-motion";
 import { MessageSquare, Sparkles, Bell } from "lucide-react";
-import { DecorativeBackground } from "@/components/Decorations";
 
 export default function PhrasesPage() {
   return (
-    <div className="min-h-screen relative flex flex-col items-center justify-center p-8">
-      <DecorativeBackground />
+    <div className="min-h-full flex flex-col items-center justify-center p-8">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative z-10 max-w-md text-center"
+        className="max-w-md text-center"
       >
         <div className="mx-auto mb-6 w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
           <MessageSquare className="w-8 h-8 text-primary" />

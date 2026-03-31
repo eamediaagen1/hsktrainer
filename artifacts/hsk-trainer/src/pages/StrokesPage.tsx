@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { PenLine, Sparkles, Bell } from "lucide-react";
-import { DecorativeBackground } from "@/components/Decorations";
 
 const DEMO_STROKES = [
   { char: "人", strokes: 2, meaning: "Person" },
@@ -13,13 +12,12 @@ const DEMO_STROKES = [
 
 export default function StrokesPage() {
   return (
-    <div className="min-h-screen relative flex flex-col items-center justify-center p-8">
-      <DecorativeBackground />
+    <div className="min-h-full flex flex-col items-center justify-center p-8">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative z-10 max-w-lg text-center w-full"
+        className="max-w-lg text-center w-full"
       >
         <div className="mx-auto mb-6 w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
           <PenLine className="w-8 h-8 text-primary" />

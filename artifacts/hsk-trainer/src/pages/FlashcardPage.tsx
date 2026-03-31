@@ -3,8 +3,6 @@ import { useLocation, useParams } from "wouter";
 import { ArrowLeft, ArrowRight, Star, ChevronLeft, Volume2 } from "lucide-react";
 import { hskData } from "@/data/hskData";
 import { useStore } from "@/hooks/use-store";
-import { DecorativeBackground } from "@/components/Decorations";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Flashcard } from "@/components/Flashcard";
 import { cn } from "@/lib/utils";
 import { speakChinese } from "@/lib/speech";
@@ -40,20 +38,15 @@ export default function FlashcardPage() {
       ? allLevelWords.filter((w) => w.category === activeCategory)
       : allLevelWords;
 
-  // Reset card index & flip when category changes
   useEffect(() => {
     setCurrentIndex(0);
     setIsFlipped(false);
   }, [activeCategory]);
 
-  // Reset flip when card changes
   useEffect(() => {
     setIsFlipped(false);
   }, [currentIndex]);
 
-  // Clamp safeIndex so a stale currentIndex never exceeds the filtered word list.
-  // Without this, switching to a category with fewer words causes one crash frame
-  // before the reset-to-0 effect fires.
   const safeIndex = levelWords.length > 0 ? Math.min(currentIndex, levelWords.length - 1) : 0;
 
   const handleSpeak = useCallback(() => {
@@ -62,7 +55,6 @@ export default function FlashcardPage() {
     const didSpeak = speakChinese(wordEntry.word);
     if (didSpeak) {
       setIsSpeaking(true);
-      // Estimate spoken duration: ~400ms base + ~120ms per character
       const ms = 400 + wordEntry.word.length * 120 + 200;
       setTimeout(() => setIsSpeaking(false), ms);
     }
@@ -70,9 +62,9 @@ export default function FlashcardPage() {
 
   if (levelWords.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">No words found</h2>
+      <div className="min-h-full flex items-center justify-center">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold mb-4 text-foreground">No words found</h2>
           <button onClick={() => setLocation("/levels")} className="text-primary hover:underline">
             Go back
           </button>
@@ -94,177 +86,164 @@ export default function FlashcardPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      <DecorativeBackground />
+    <div className="min-h-full flex flex-col">
 
-      {/* Header */}
-      <header className="bg-background/80 backdrop-blur-lg border-b border-border/50 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center gap-3">
+      {/* ── Sticky top zone: context bar + mobile category chips ── */}
+      <div className="sticky top-[52px] md:top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+
+        {/* Header row */}
+        <div className="flex items-center justify-between gap-3 px-4 h-[52px]">
           <button
             onClick={() => setLocation("/levels")}
-            className="p-2 -ml-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-1"
+            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors rounded-lg py-1.5 px-2 -ml-2 hover:bg-muted"
           >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="hidden sm:inline font-medium">Levels</span>
+            <ChevronLeft className="w-4 h-4" />
+            <span className="hidden sm:inline text-sm font-medium">Levels</span>
           </button>
-          <div className="h-6 w-px bg-border mx-1" />
-          <span className="font-bold font-serif text-lg">HSK {level}</span>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
+          <span className="font-bold font-serif text-base">HSK {level}</span>
+
           <button
             onClick={() => setLocation("/review")}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border hover:bg-gold/10 hover:border-gold/50 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border hover:bg-gold/10 hover:border-gold/40 transition-colors text-sm font-medium"
           >
-            <Star className="w-4 h-4 text-gold fill-gold/20" />
-            <span className="hidden sm:inline text-sm font-medium">Review</span>
+            <Star className="w-3.5 h-3.5 text-gold fill-gold/20" />
+            <span className="hidden sm:inline">Review</span>
           </button>
         </div>
-      </header>
 
-      {/* Body: Sidebar + Main */}
-      <div className="flex flex-1 w-full max-w-5xl mx-auto">
-        {/* ── Category Sidebar (desktop) / Scroll bar (mobile) ── */}
+        {/* Mobile category chips (lg: desktop sidebar takes over) */}
         {isHsk1 && (
-          <>
-            {/* Desktop sidebar */}
-            <aside className="hidden md:flex flex-col gap-1 w-44 shrink-0 pt-8 pr-4 pl-2 border-r border-border/40">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
-                Categories
-              </p>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={cn(
-                    "text-left px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
-                    activeCategory === cat
-                      ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  {cat}
-                </button>
-              ))}
-            </aside>
+          <div className="flex lg:hidden gap-2 overflow-x-auto scrollbar-none px-4 pb-2.5">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  "shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150",
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-            {/* Mobile horizontal scroll bar */}
-            <div className="md:hidden flex gap-2 overflow-x-auto scrollbar-none px-4 pt-4 pb-0 w-full absolute top-[57px] left-0 z-40 bg-background/90 backdrop-blur border-b border-border/30">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={cn(
-                    "shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 mb-2",
-                    activeCategory === cat
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </>
+      {/* ── Body: category sidebar (desktop lg+) + flashcard main ── */}
+      <div className="flex flex-1 w-full max-w-5xl mx-auto">
+
+        {/* Desktop category sidebar — only visible at lg+ */}
+        {isHsk1 && (
+          <aside className="hidden lg:flex flex-col gap-px w-44 shrink-0 pt-6 pr-3 pl-2 border-r border-border/40">
+            <p className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-widest mb-3 px-3">
+              Categories
+            </p>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  "text-left px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150",
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </aside>
         )}
 
-        {/* ── Flashcard Main Area ── */}
-        <main
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center p-4 md:p-8 w-full",
-            isHsk1 ? "md:pt-8 pt-16" : ""
-          )}
-        >
-          {/* Progress */}
-          <div className="w-full max-w-sm mb-8">
-            <div className="flex justify-between text-sm font-medium text-muted-foreground mb-2">
-              <span>
-                {isHsk1 && activeCategory !== ALL_CATEGORIES ? (
-                  <span className="text-primary font-semibold">{activeCategory}</span>
-                ) : (
-                  "Progress"
-                )}
-              </span>
-              <span>
-                {safeIndex + 1} / {levelWords.length}
-              </span>
-            </div>
-            <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
+        {/* Flashcard main area */}
+        <main className="flex-1 flex flex-col py-6 px-4 md:px-8 overflow-y-auto">
+          <div className="mx-auto w-full max-w-sm flex flex-col gap-5">
 
-          <Flashcard
-            word={currentWord}
-            isFlipped={isFlipped}
-            onFlip={() => setIsFlipped(!isFlipped)}
-          />
-
-          {/* Controls */}
-          <div className="w-full max-w-sm mt-8 flex flex-col gap-3">
-            {/* Voice + Save row */}
-            <div className="flex gap-3">
-              {/* Listen button */}
-              <button
-                onClick={handleSpeak}
-                disabled={!speechSupported}
-                title={speechSupported ? "Listen to pronunciation" : "Speech not supported in this browser"}
-                className={cn(
-                  "flex-1 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 border",
-                  speechSupported
-                    ? isSpeaking
-                      ? "bg-blue-500/15 border-blue-400/50 text-blue-600 dark:text-blue-400 shadow-sm"
-                      : "bg-card border-border text-foreground hover:bg-blue-500/10 hover:border-blue-400/40 hover:text-blue-600 dark:hover:text-blue-400"
-                    : "bg-muted border-border text-muted-foreground cursor-not-allowed opacity-50"
-                )}
-              >
-                <Volume2
-                  className={cn(
-                    "w-4 h-4 transition-transform",
-                    isSpeaking && "animate-pulse"
+            {/* Progress */}
+            <div>
+              <div className="flex justify-between text-sm font-medium text-muted-foreground mb-2">
+                <span>
+                  {isHsk1 && activeCategory !== ALL_CATEGORIES ? (
+                    <span className="text-primary font-semibold">{activeCategory}</span>
+                  ) : (
+                    "Progress"
                   )}
+                </span>
+                <span className="tabular-nums">{safeIndex + 1} / {levelWords.length}</span>
+              </div>
+              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
                 />
-                <span className="text-sm">{isSpeaking ? "Playing…" : "Listen"}</span>
-              </button>
-
-              {/* Save for Review */}
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleSaveCard(currentWord.id); }}
-                className={cn(
-                  "flex-1 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 border-2",
-                  saved
-                    ? "bg-gold/20 text-gold-foreground border-gold/50 hover:bg-gold/30 shadow-[0_0_15px_rgba(253,185,19,0.2)]"
-                    : "bg-card text-foreground border-border hover:border-border/80 hover:bg-muted"
-                )}
-              >
-                <Star className={cn("w-4 h-4", saved ? "fill-gold text-gold" : "text-muted-foreground")} />
-                <span className="text-sm">{saved ? "Saved" : "Save"}</span>
-              </button>
+              </div>
             </div>
 
-            {/* Prev / Next */}
-            <div className="flex gap-3">
-              <button
-                onClick={handlePrev}
-                disabled={currentIndex === 0}
-                className="flex-1 py-4 rounded-xl font-semibold bg-card border border-border text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                Prev
-              </button>
-              <button
-                onClick={handleNext}
-                disabled={currentIndex === levelWords.length - 1}
-                className="flex-1 py-4 rounded-xl font-semibold bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all flex items-center justify-center gap-2"
-              >
-                Next
-                <ArrowRight className="w-5 h-5" />
-              </button>
+            <Flashcard
+              word={currentWord}
+              isFlipped={isFlipped}
+              onFlip={() => setIsFlipped(!isFlipped)}
+            />
+
+            {/* Controls */}
+            <div className="flex flex-col gap-3 pb-6">
+              {/* Voice + Save */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSpeak}
+                  disabled={!speechSupported}
+                  className={cn(
+                    "flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 border text-sm",
+                    speechSupported
+                      ? isSpeaking
+                        ? "bg-blue-500/15 border-blue-400/50 text-blue-600 dark:text-blue-400"
+                        : "bg-card border-border text-foreground hover:bg-blue-500/10 hover:border-blue-400/40 hover:text-blue-600"
+                      : "bg-muted border-border text-muted-foreground cursor-not-allowed opacity-50"
+                  )}
+                >
+                  <Volume2 className={cn("w-4 h-4", isSpeaking && "animate-pulse")} />
+                  {isSpeaking ? "Playing…" : "Listen"}
+                </button>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleSaveCard(currentWord.id); }}
+                  className={cn(
+                    "flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 border-2 text-sm",
+                    saved
+                      ? "bg-gold/20 text-gold-foreground border-gold/50 hover:bg-gold/30 shadow-[0_0_15px_rgba(253,185,19,0.2)]"
+                      : "bg-card text-foreground border-border hover:border-border/80 hover:bg-muted"
+                  )}
+                >
+                  <Star className={cn("w-4 h-4", saved ? "fill-gold text-gold" : "text-muted-foreground")} />
+                  {saved ? "Saved" : "Save"}
+                </button>
+              </div>
+
+              {/* Prev / Next */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handlePrev}
+                  disabled={currentIndex === 0}
+                  className="flex-1 py-3.5 rounded-xl font-semibold bg-card border border-border text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Prev
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={currentIndex === levelWords.length - 1}
+                  className="flex-1 py-3.5 rounded-xl font-semibold bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all flex items-center justify-center gap-2"
+                >
+                  Next
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
+
           </div>
         </main>
       </div>

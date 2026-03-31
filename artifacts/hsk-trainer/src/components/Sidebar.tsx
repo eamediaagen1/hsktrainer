@@ -18,6 +18,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "@/contexts/sidebar-context";
 import { useStore } from "@/hooks/use-store";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -249,6 +250,25 @@ function SidebarContent({
           </div>
         ))}
       </nav>
+
+      {/* Theme toggle */}
+      <div className="px-2 pb-1 shrink-0">
+        {isExpanded ? (
+          <div className="flex items-center gap-3 px-3 py-1.5 rounded-xl">
+            <span className="text-sm text-muted-foreground flex-1">Theme</span>
+            <ThemeToggle />
+          </div>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex justify-center py-1.5">
+                <ThemeToggle />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>Toggle theme</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
 
       {/* User + sign-out */}
       <div className="border-t border-border/50 px-2 py-2 shrink-0">

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Settings, Moon, Sun, Globe, Bell, Shield, ChevronRight, Check } from "lucide-react";
 import { useStore } from "@/hooks/use-store";
-import { DecorativeBackground } from "@/components/Decorations";
+import { PageShell } from "@/components/PageShell";
 import { cn } from "@/lib/utils";
 
 interface SettingRowProps {
@@ -50,40 +50,36 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
-type DarkMode = "light" | "dark" | "system";
+type ThemeMode = "light" | "dark" | "system";
+
+const sectionDelay = (n: number) => ({ duration: 0.3, delay: n * 0.06 });
 
 export default function SettingsPage() {
   const { email, isPaid } = useStore();
-  const [darkMode, setDarkMode] = useState<DarkMode>("system");
+  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
   const [notifications, setNotifications] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
   const [showPinyin, setShowPinyin] = useState(true);
 
   return (
-    <div className="min-h-screen relative pb-16">
-      <DecorativeBackground />
+    <PageShell maxWidth="md">
 
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-8 md:pt-12">
-
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <Settings className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-foreground">Settings</h1>
-            <p className="text-sm text-muted-foreground">Manage your preferences</p>
-          </div>
+      {/* Page header */}
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+          <Settings className="w-5 h-5 text-primary" />
         </div>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-foreground">Settings</h1>
+          <p className="text-sm text-muted-foreground">Manage your preferences</p>
+        </div>
+      </div>
 
-        {/* Account card */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mb-5"
-        >
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Account</h2>
+      <div className="flex flex-col gap-5">
+
+        {/* Account */}
+        <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={sectionDelay(0)}>
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Account</h2>
           <div className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm">
             <div className="flex items-center gap-4 px-5 py-4 border-b border-border/40">
               <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center shrink-0">
@@ -117,33 +113,24 @@ export default function SettingsPage() {
         </motion.section>
 
         {/* Appearance */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.06 }}
-          className="mb-5"
-        >
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Appearance</h2>
+        <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={sectionDelay(1)}>
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Appearance</h2>
           <div className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm">
             <div className="px-5 py-4">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                  {darkMode === "dark" ? (
-                    <Moon className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <Sun className="w-4 h-4 text-muted-foreground" />
-                  )}
+                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  {themeMode === "dark" ? <Moon className="w-4 h-4 text-muted-foreground" /> : <Sun className="w-4 h-4 text-muted-foreground" />}
                 </div>
                 <p className="text-sm font-medium text-foreground">Theme</p>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {(["light", "dark", "system"] as DarkMode[]).map((mode) => (
+                {(["light", "dark", "system"] as ThemeMode[]).map((mode) => (
                   <button
                     key={mode}
-                    onClick={() => setDarkMode(mode)}
+                    onClick={() => setThemeMode(mode)}
                     className={cn(
                       "py-2 rounded-xl text-sm font-medium capitalize border transition-all",
-                      darkMode === mode
+                      themeMode === mode
                         ? "bg-primary text-primary-foreground border-primary shadow-sm"
                         : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
                     )}
@@ -156,14 +143,9 @@ export default function SettingsPage() {
           </div>
         </motion.section>
 
-        {/* Study preferences */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.12 }}
-          className="mb-5"
-        >
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Study</h2>
+        {/* Study */}
+        <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={sectionDelay(2)}>
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Study</h2>
           <div className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm divide-y divide-border/40">
             <SettingRow icon={Globe} label="Show Pinyin" description="Display romanisation on flashcards">
               <Toggle value={showPinyin} onChange={setShowPinyin} />
@@ -175,13 +157,8 @@ export default function SettingsPage() {
         </motion.section>
 
         {/* Notifications */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.18 }}
-          className="mb-5"
-        >
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Notifications</h2>
+        <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={sectionDelay(3)}>
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Notifications</h2>
           <div className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm">
             <SettingRow icon={Bell} label="Daily reminders" description="Get nudged to review your cards">
               <Toggle value={notifications} onChange={setNotifications} />
@@ -190,12 +167,8 @@ export default function SettingsPage() {
         </motion.section>
 
         {/* Privacy */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.24 }}
-        >
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Privacy</h2>
+        <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={sectionDelay(4)}>
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1 mb-2">Privacy</h2>
           <div className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm">
             <button className="flex items-center justify-between w-full px-5 py-3.5 text-sm text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors border-b border-border/40">
               <div className="flex items-center gap-3">
@@ -215,6 +188,6 @@ export default function SettingsPage() {
         </motion.section>
 
       </div>
-    </div>
+    </PageShell>
   );
 }

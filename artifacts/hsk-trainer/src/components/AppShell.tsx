@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Menu } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { DecorativeBackground } from "@/components/Decorations";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { cn } from "@/lib/utils";
 
@@ -37,13 +38,12 @@ function AppContent({ children }: { children: ReactNode }) {
   return (
     <motion.main
       className={cn(
-        "min-h-screen flex flex-col",
+        "min-h-screen w-full flex flex-col",
         "pt-[52px] md:pt-0",
         "transition-[padding-left] duration-200 ease-in-out",
         "md:pl-[64px]",
         isExpanded ? "md:pl-[240px]" : "md:pl-[64px]"
       )}
-      layout
     >
       {children}
     </motion.main>
@@ -56,6 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <div className="relative flex min-h-screen bg-background">
+        <DecorativeBackground />
         <Sidebar />
         <MobileTopbar />
         <AppContent>{children}</AppContent>

@@ -3,8 +3,6 @@ import { useLocation } from "wouter";
 import { ChevronLeft, Star, Sparkles, CheckCircle2, Volume2 } from "lucide-react";
 import { hskData } from "@/data/hskData";
 import { useStore } from "@/hooks/use-store";
-import { DecorativeBackground } from "@/components/Decorations";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Flashcard } from "@/components/Flashcard";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -13,18 +11,15 @@ import { speakChinese } from "@/lib/speech";
 export default function ReviewPage() {
   const [, setLocation] = useLocation();
   const { savedCards, updateCardReview } = useStore();
-  
+
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
-  // Compute due cards ONCE on mount or when returning to page, so list doesn't vanish instantly upon rating
   const reviewQueue = useMemo(() => {
     const now = Date.now();
-    const dueIds = Object.keys(savedCards).filter(id => savedCards[id].nextReview <= now);
-    return hskData.filter(w => dueIds.includes(w.id));
-    // We purposefully omit savedCards from dependency array to lock the queue 
-    // for this session. It updates if we leave and come back.
+    const dueIds = Object.keys(savedCards).filter((id) => savedCards[id].nextReview <= now);
+    return hskData.filter((w) => dueIds.includes(w.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -48,93 +43,85 @@ export default function ReviewPage() {
   const handleRating = (difficulty: "hard" | "good" | "easy") => {
     const wordId = reviewQueue[currentIndex].id;
     updateCardReview(wordId, difficulty);
-    
-    // Move to next card
-    setTimeout(() => {
-      setCurrentIndex(prev => prev + 1);
-    }, 400); // short delay to show button press
+    setTimeout(() => setCurrentIndex((prev) => prev + 1), 400);
   };
 
   const isComplete = currentIndex >= reviewQueue.length;
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      <DecorativeBackground />
-      
-      {/* Header */}
-      <header className="bg-background/80 backdrop-blur-lg border-b border-border/50 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setLocation("/levels")}
-            className="p-2 -ml-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-1"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="hidden sm:inline font-medium">Exit Review</span>
-          </button>
+    <div className="min-h-full flex flex-col">
+
+      {/* Sticky header */}
+      <header className="sticky top-[52px] md:top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/50 h-[52px] flex items-center justify-between px-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+        <button
+          onClick={() => setLocation("/levels")}
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors rounded-lg py-1.5 px-2 -ml-2 hover:bg-muted"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span className="hidden sm:inline text-sm font-medium">Exit Review</span>
+        </button>
+        <div className="flex items-center gap-2 text-gold font-bold">
+          <Star className="w-4 h-4 fill-gold" />
+          <span className="font-serif text-base">Review Mode</span>
         </div>
-        <div className="flex items-center gap-3 text-gold font-bold">
-          <Star className="w-5 h-5 fill-gold" />
-          <span>Review Mode</span>
-        </div>
-        <ThemeToggle />
+        <div className="w-16" />
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 w-full max-w-4xl mx-auto">
         <AnimatePresence mode="wait">
           {isComplete ? (
-            <motion.div 
+            <motion.div
               key="complete"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-card border border-border/50 p-12 rounded-3xl shadow-xl text-center max-w-md"
+              className="bg-card border border-border/50 p-10 rounded-2xl shadow-xl text-center max-w-md w-full"
             >
-              <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle2 className="w-10 h-10" />
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h2 className="text-3xl font-serif font-bold text-foreground mb-4">All Caught Up!</h2>
-              <p className="text-muted-foreground mb-8">
+              <h2 className="text-3xl font-serif font-bold text-foreground mb-3">All Caught Up!</h2>
+              <p className="text-muted-foreground mb-7 text-sm leading-relaxed">
                 You've reviewed all your due cards for now. Great job sticking to your habit.
               </p>
               <button
                 onClick={() => setLocation("/levels")}
-                className="w-full py-4 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
+                className="w-full py-3.5 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
               >
                 Back to Levels
               </button>
             </motion.div>
           ) : (
-            <motion.div 
+            <motion.div
               key="studying"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               className="w-full flex flex-col items-center"
             >
-              <div className="w-full max-w-sm mb-6 text-center">
+              <div className="w-full max-w-sm mb-5 text-center">
                 <p className="text-sm font-bold text-primary flex items-center justify-center gap-2">
                   <Sparkles className="w-4 h-4" />
                   {reviewQueue.length - currentIndex} cards remaining
                 </p>
               </div>
 
-              <Flashcard 
+              <Flashcard
                 word={reviewQueue[currentIndex]}
                 isFlipped={isFlipped}
                 onFlip={() => setIsFlipped(!isFlipped)}
               />
 
-              {/* Voice button */}
+              {/* Listen */}
               <div className="w-full max-w-sm mt-4">
                 <button
                   onClick={handleSpeak}
                   disabled={!speechSupported}
-                  title={speechSupported ? "Listen to pronunciation" : "Speech not supported in this browser"}
                   className={cn(
                     "w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 border text-sm",
                     speechSupported
                       ? isSpeaking
                         ? "bg-blue-500/15 border-blue-400/50 text-blue-600 dark:text-blue-400"
-                        : "bg-card border-border text-foreground hover:bg-blue-500/10 hover:border-blue-400/40 hover:text-blue-600 dark:hover:text-blue-400"
+                        : "bg-card border-border text-foreground hover:bg-blue-500/10 hover:border-blue-400/40 hover:text-blue-600"
                       : "bg-muted border-border text-muted-foreground cursor-not-allowed opacity-50"
                   )}
                 >
@@ -143,37 +130,38 @@ export default function ReviewPage() {
                 </button>
               </div>
 
-              <div className="w-full max-w-sm mt-4 h-20">
+              {/* Rating / flip prompt */}
+              <div className="w-full max-w-sm mt-4 h-[80px]">
                 {isFlipped ? (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="grid grid-cols-3 gap-3"
                   >
                     <button
                       onClick={() => handleRating("hard")}
-                      className="py-3 px-2 rounded-xl font-bold bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors flex flex-col items-center"
+                      className="py-3 rounded-xl font-bold bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors flex flex-col items-center gap-0.5"
                     >
-                      <span>Hard</span>
-                      <span className="text-[10px] opacity-70 mt-1">1 Day</span>
+                      <span className="text-sm">Hard</span>
+                      <span className="text-[10px] opacity-60">1 Day</span>
                     </button>
                     <button
                       onClick={() => handleRating("good")}
-                      className="py-3 px-2 rounded-xl font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors flex flex-col items-center"
+                      className="py-3 rounded-xl font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors flex flex-col items-center gap-0.5"
                     >
-                      <span>Good</span>
-                      <span className="text-[10px] opacity-70 mt-1">3 Days</span>
+                      <span className="text-sm">Good</span>
+                      <span className="text-[10px] opacity-60">3 Days</span>
                     </button>
                     <button
                       onClick={() => handleRating("easy")}
-                      className="py-3 px-2 rounded-xl font-bold bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors flex flex-col items-center"
+                      className="py-3 rounded-xl font-bold bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors flex flex-col items-center gap-0.5"
                     >
-                      <span>Easy</span>
-                      <span className="text-[10px] opacity-70 mt-1">7 Days</span>
+                      <span className="text-sm">Easy</span>
+                      <span className="text-[10px] opacity-60">7 Days</span>
                     </button>
                   </motion.div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground font-medium bg-card rounded-xl border border-border shadow-sm">
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground font-medium bg-card rounded-xl border border-border shadow-sm">
                     Flip card to rate
                   </div>
                 )}

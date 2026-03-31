@@ -1,10 +1,8 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import { ChevronLeft, RotateCcw, CheckCircle2, XCircle, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { hskData, VocabWord } from "@/data/hskData";
-import { DecorativeBackground } from "@/components/Decorations";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 type QuestionType = "char-to-meaning" | "meaning-to-char" | "pinyin-to-char";
@@ -110,9 +108,9 @@ export default function QuizPage() {
 
   if (levelWords.length < 4) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      <div className="min-h-full flex items-center justify-center">
         <div className="text-center p-8">
-          <h2 className="text-2xl font-bold mb-4">Not enough words for a quiz</h2>
+          <h2 className="text-2xl font-bold mb-4 text-foreground">Not enough words for a quiz</h2>
           <button onClick={() => setLocation("/levels")} className="text-primary hover:underline">
             Go back
           </button>
@@ -122,23 +120,22 @@ export default function QuizPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      <DecorativeBackground />
+    <div className="min-h-full flex flex-col">
 
-      {/* Header */}
-      <header className="bg-background/80 backdrop-blur-lg border-b border-border/50 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+      {/* Sticky header */}
+      <header className="sticky top-[52px] md:top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/50 h-[52px] flex items-center justify-between px-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
         <button
           onClick={() => setLocation("/levels")}
-          className="p-2 -ml-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center gap-1"
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors rounded-lg py-1.5 px-2 -ml-2 hover:bg-muted"
         >
-          <ChevronLeft className="w-5 h-5" />
-          <span className="hidden sm:inline font-medium">Levels</span>
+          <ChevronLeft className="w-4 h-4" />
+          <span className="hidden sm:inline text-sm font-medium">Levels</span>
         </button>
         <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-gold" />
-          <span className="font-bold font-serif text-lg">HSK {level} Quiz</span>
+          <Trophy className="w-4 h-4 text-gold" />
+          <span className="font-bold font-serif text-base">HSK {level} Quiz</span>
         </div>
-        <ThemeToggle />
+        <div className="w-16" />
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 w-full max-w-2xl mx-auto">
@@ -149,18 +146,16 @@ export default function QuizPage() {
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.22 }}
               className="w-full"
             >
               {/* Progress bar */}
-              <div className="mb-6">
+              <div className="mb-5">
                 <div className="flex justify-between text-sm font-medium text-muted-foreground mb-2">
                   <span>{QUESTION_LABELS[currentQuestion.type]}</span>
-                  <span className="tabular-nums">
-                    {currentIndex + 1} / {questions.length}
-                  </span>
+                  <span className="tabular-nums">{currentIndex + 1} / {questions.length}</span>
                 </div>
-                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary transition-all duration-500 ease-out"
                     style={{ width: `${progress}%` }}
@@ -169,7 +164,7 @@ export default function QuizPage() {
               </div>
 
               {/* Prompt card */}
-              <div className="bg-card border border-border/50 rounded-3xl p-10 shadow-lg mb-6 text-center relative overflow-hidden">
+              <div className="bg-card border border-border/50 rounded-2xl p-8 md:p-10 shadow-lg mb-5 text-center relative overflow-hidden">
                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-gold to-primary" />
                 {currentQuestion.type === "char-to-meaning" ? (
                   <p className="text-8xl font-serif text-foreground leading-none">{currentQuestion.prompt}</p>
@@ -189,11 +184,9 @@ export default function QuizPage() {
                     "bg-card border-border text-foreground hover:border-primary/50 hover:bg-primary/5";
                   if (isAnswered) {
                     if (isThisCorrect) {
-                      choiceStyle =
-                        "bg-green-500/10 border-green-500/60 text-green-700 dark:text-green-400 shadow-sm shadow-green-500/10";
+                      choiceStyle = "bg-green-500/10 border-green-500/60 text-green-700 dark:text-green-400";
                     } else if (isThisSelected) {
-                      choiceStyle =
-                        "bg-destructive/10 border-destructive/50 text-destructive";
+                      choiceStyle = "bg-destructive/10 border-destructive/50 text-destructive";
                     } else {
                       choiceStyle = "bg-card border-border/40 text-muted-foreground opacity-60";
                     }
@@ -206,23 +199,19 @@ export default function QuizPage() {
                       onClick={() => handleSelect(choice)}
                       disabled={isAnswered}
                       className={cn(
-                        "relative flex items-center gap-3 px-5 py-4 rounded-2xl border-2 font-medium text-left transition-all duration-200",
+                        "relative flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 font-medium text-left transition-all duration-200",
                         choiceStyle,
                         !isAnswered && "cursor-pointer"
                       )}
                     >
-                      <span className="shrink-0 w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-xs font-bold text-muted-foreground">
+                      <span className="shrink-0 w-6 h-6 rounded-full bg-muted/60 flex items-center justify-center text-xs font-bold text-muted-foreground">
                         {String.fromCharCode(65 + i)}
                       </span>
                       <span className={cn("flex-1", currentQuestion.type === "meaning-to-char" && "text-2xl font-serif")}>
                         {choice}
                       </span>
-                      {isAnswered && isThisCorrect && (
-                        <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                      )}
-                      {isAnswered && isThisSelected && !isThisCorrect && (
-                        <XCircle className="w-5 h-5 text-destructive shrink-0" />
-                      )}
+                      {isAnswered && isThisCorrect && <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />}
+                      {isAnswered && isThisSelected && !isThisCorrect && <XCircle className="w-4 h-4 text-destructive shrink-0" />}
                     </motion.button>
                   );
                 })}
@@ -236,12 +225,7 @@ export default function QuizPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-5 flex flex-col items-center gap-3"
                   >
-                    <p
-                      className={cn(
-                        "text-sm font-semibold",
-                        isCorrect ? "text-green-600 dark:text-green-400" : "text-destructive"
-                      )}
-                    >
+                    <p className={cn("text-sm font-semibold", isCorrect ? "text-green-600 dark:text-green-400" : "text-destructive")}>
                       {isCorrect ? "✓ Correct!" : `✗ Correct answer: ${currentQuestion.correctAnswer}`}
                     </p>
                     <button
@@ -255,87 +239,64 @@ export default function QuizPage() {
               </AnimatePresence>
             </motion.div>
           ) : (
-            /* Result screen */
             <motion.div
               key="result"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="w-full max-w-md mx-auto"
             >
-              <div className="bg-card border border-border/50 rounded-3xl p-10 shadow-xl text-center relative overflow-hidden">
+              <div className="bg-card border border-border/50 rounded-2xl p-8 md:p-10 shadow-xl text-center relative overflow-hidden">
                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-gold to-primary" />
 
-                {/* Icon */}
-                <div
-                  className={cn(
-                    "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6",
-                    isPassing
-                      ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {isPassing ? (
-                    <CheckCircle2 className="w-10 h-10" />
-                  ) : (
-                    <Trophy className="w-10 h-10" />
-                  )}
+                <div className={cn(
+                  "w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5",
+                  isPassing ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"
+                )}>
+                  {isPassing ? <CheckCircle2 className="w-8 h-8" /> : <Trophy className="w-8 h-8" />}
                 </div>
 
-                <h2 className="text-3xl font-serif font-bold text-foreground mb-2">
-                  Quiz Complete!
-                </h2>
+                <h2 className="text-3xl font-serif font-bold text-foreground mb-2">Quiz Complete!</h2>
 
-                {/* Score */}
-                <p className="text-6xl font-bold text-foreground my-6 tabular-nums">
+                <p className="text-6xl font-bold text-foreground my-5 tabular-nums">
                   {score}
-                  <span className="text-3xl text-muted-foreground font-normal">
-                    /{questions.length}
-                  </span>
+                  <span className="text-3xl text-muted-foreground font-normal">/{questions.length}</span>
                 </p>
 
-                {/* Passed badge */}
                 {isPassing && (
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.3, type: "spring" }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold text-sm mb-6 border border-green-200 dark:border-green-800"
+                    className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold text-sm mb-5 border border-green-200 dark:border-green-800"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircle2 className="w-3.5 h-3.5" />
                     Passed ✓
                   </motion.div>
                 )}
                 {!isPassing && (
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Score 90% or above to pass. Keep practicing!
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-5">Score 90% or above to pass. Keep practicing!</p>
                 )}
 
-                {/* Percentage bar */}
-                <div className="w-full bg-muted rounded-full h-3 mb-8 overflow-hidden">
+                <div className="w-full bg-muted rounded-full h-2.5 mb-7 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${(score / questions.length) * 100}%` }}
                     transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-                    className={cn(
-                      "h-full rounded-full",
-                      isPassing ? "bg-green-500" : "bg-primary"
-                    )}
+                    className={cn("h-full rounded-full", isPassing ? "bg-green-500" : "bg-primary")}
                   />
                 </div>
 
-                {/* Buttons */}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5">
                   <button
                     onClick={handleReplay}
-                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
                   >
                     <RotateCcw className="w-4 h-4" />
                     Replay Quiz
                   </button>
                   <button
                     onClick={() => setLocation(`/flashcards/${level}`)}
-                    className="w-full py-4 rounded-xl font-semibold bg-card border-2 border-border text-foreground hover:bg-muted transition-colors"
+                    className="w-full py-3.5 rounded-xl font-semibold bg-card border-2 border-border text-foreground hover:bg-muted transition-colors"
                   >
                     Study Flashcards
                   </button>
