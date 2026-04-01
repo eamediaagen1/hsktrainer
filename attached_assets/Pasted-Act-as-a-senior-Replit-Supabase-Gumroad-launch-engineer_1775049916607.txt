@@ -1,0 +1,123 @@
+Act as a senior Replit + Supabase + Gumroad launch engineer.
+
+The main implementation is now mostly complete.
+
+Already finished:
+- QuizPage is fully gated for premium levels
+- HSK 2–6 fetch from secured API only
+- Paywall shown on 403
+- Loading and error states added
+- App router redirect logic fixed using useEffect
+- HSK 2–6 removed from frontend bundle
+- Frontend now only ships HSK 1 data
+- Premium content is intended to live server-side only
+
+Current required secrets:
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+- SUPABASE_ANON_KEY
+- GUMROAD_WEBHOOK_SECRET
+- GUMROAD_PRODUCT_PERMALINK
+- APP_URL
+- VITE_GUMROAD_URL
+
+There is also a SQL migration to run:
+- migrations/001_supabase_schema.sql
+
+And admin promotion currently requires:
+UPDATE profiles SET role = 'admin' WHERE email = 'YOUR_EMAIL';
+
+Your job now:
+Take this project from “mostly implemented” to “ready to configure, verify, and launch”.
+
+I want you to produce the following in order:
+
+1. Configuration completion checklist
+2. Exact Replit Secrets setup list with descriptions and example values
+3. Exact Supabase dashboard setup steps
+4. Exact Gumroad setup steps
+5. Exact SQL migration execution steps
+6. Exact first-admin setup steps
+7. End-to-end verification checklist
+8. Launch blockers list
+9. Post-launch monitoring checklist
+10. A “save for later” procedure for changing host/domain in the future
+
+Important:
+- Assume the code is already mostly done
+- Focus on setup, verification, environment variables, dashboard configuration, and launch readiness
+- Be concrete and step-by-step
+- Use placeholders where I must fill in final values
+- Call out anything dangerous or commonly forgotten
+
+I specifically want these sections:
+
+SECTION A — Replit Secrets
+For each secret, explain:
+- what it is
+- where to get it
+- example format
+- whether it is frontend-safe or backend-only
+- common mistakes
+
+SECTION B — Supabase Setup
+Include:
+- Auth settings
+- Site URL
+- Redirect URLs
+- RLS verification
+- SQL migration order
+- table verification
+- how to test profile creation
+- how to test premium access fields
+
+SECTION C — Gumroad Setup
+Include:
+- webhook URL setup
+- product permalink setup
+- how to test a successful purchase flow
+- how to test mismatch email flow
+- how to test refund/reversal flow
+- how to safely handle coupons
+
+SECTION D — First Launch Test Plan
+Give me a clean step-by-step test plan for:
+- anonymous user
+- free user
+- premium user
+- admin user
+- refund/revoked user
+- broken webhook scenario
+
+SECTION E — Save For Later: Host/Domain Change Procedure
+Give me a future-proof checklist for changing from current Replit URL to a custom domain later.
+Include:
+- APP_URL
+- VITE_GUMROAD_URL if needed
+- Supabase Site URL
+- Supabase redirect URLs
+- Gumroad webhook URL
+- CORS allowlist
+- any frontend base URLs
+- any backend callback URLs
+- post-change smoke tests
+
+SECTION F — Final Go/No-Go Verdict
+Tell me:
+- what must be done before launch
+- what is optional
+- what can wait until after launch
+
+Also:
+Review the current setup assumptions and tell me if any of these are suspicious, incomplete, or insecure:
+- storing both VITE_SUPABASE_ANON_KEY and SUPABASE_ANON_KEY
+- manual SQL admin promotion
+- Gumroad webhook secret handling
+- using APP_URL for all callbacks
+- same-origin /api on one Replit deployment
+
+At the end, give me:
+1. a shortest possible “do these now” checklist
+2. a copy-paste “save this for later” checklist for domain change
