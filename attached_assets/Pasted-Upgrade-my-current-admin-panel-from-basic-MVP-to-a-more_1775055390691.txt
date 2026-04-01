@@ -1,0 +1,366 @@
+Upgrade my current admin panel from basic MVP to a more complete, private, production-practical admin ops panel.
+
+IMPORTANT CONTEXT
+- The app is currently running in Replit
+- Later I may move to Vercel
+- Keep all URLs, origins, callback URLs, and runtime config env-driven
+- Do not hardcode deployment-specific URLs
+- Current stack:
+  - React frontend
+  - Node API routes in same app
+  - Supabase Auth
+  - Supabase Postgres
+  - Gumroad payments
+- Current admin route exists at /admin
+- Current admin panel is too minimal
+- I want better UX, stronger admin access flow, and a more complete live settings/control center
+- Do not break the existing user flow
+- Do not break HSK1 free / HSK2+ premium logic
+- Do not expose secrets to frontend
+- Keep the solution practical and lean, not enterprise-bloated
+
+MAIN GOAL
+Turn the current admin page into a proper internal admin/support dashboard with:
+1. stronger admin access flow
+2. better UI/UX
+3. full support tools
+4. config/settings visibility for live operations
+5. safer admin actions
+6. minimal risk of accidental leaks
+
+================================
+PART 1 — AUDIT CURRENT ADMIN IMPLEMENTATION
+================================
+
+First inspect the current implementation and explain:
+- current admin route structure
+- current admin auth/guard logic
+- current admin API routes
+- current settings/config support
+- what is missing for a live admin panel
+- what UI/UX problems exist
+- what security weaknesses exist
+- whether the admin page currently exposes too much or too little
+
+Then improve it without rewriting everything unnecessarily.
+
+================================
+PART 2 — ADMIN ACCESS HARDENING
+================================
+
+I want the admin area to feel separate and safer than the normal user app.
+
+Implement the simplest strong approach:
+
+1. Keep role-based admin authorization on the backend
+   - every /api/admin route must still require authenticated user + role='admin'
+   - do not rely on frontend checks
+
+2. Add a dedicated admin entry flow
+   - create /admin/login if appropriate
+   - require email + password auth for admin entry
+   - if the current session is magic-link-only or stale, require re-authentication before sensitive admin access if practical
+   - if full re-auth is too much for MVP, at minimum require:
+     - authenticated user
+     - admin role
+     - server-side verification on every request
+     - clear separation between normal app and admin pages
+
+3. Optional but preferred:
+   - Add an “admin session verified” state for sensitive actions
+   - Example: require recent login before grant/revoke premium or settings changes
+   - Choose the easiest safe implementation supported by Supabase
+
+4. Keep secrets safe
+   - never return raw env secrets to frontend
+   - config page may only show:
+     - configured / missing
+     - masked preview for safe public URLs
+     - warnings
+
+================================
+PART 3 — ADMIN PANEL UX / IA
+================================
+
+Redesign the admin panel so it feels usable for real operations.
+
+Build these sections, with clean navigation and responsive layout:
+
+A. Dashboard
+- summary cards:
+  - total users
+  - premium users
+  - recent signups
+  - recent purchases
+  - refunded/revoked count if derivable
+  - config health status
+- recent activity feed
+
+B. Users
+- search by email
+- user details page or detail panel
+- profile info
+- premium info
+- linked Gumroad email
+- purchases
+- progress summary
+- recent admin logs for that user
+
+C. Purchases
+- list recent purchases
+- filter by:
+  - paid
+  - refunded
+  - linked
+  - unlinked
+- inspect raw linkage status
+- quick link-to-user action if safe and easy
+
+D. Admin Logs
+- list recent admin actions
+- filter by action type
+- filter by target user
+- show admin actor, reason, timestamp
+
+E. Config & Settings
+Two clear sections:
+1. System health / config status
+   - APP_URL configured
+   - Supabase env presence
+   - Gumroad env presence
+   - missing required config warnings
+   - safe display only, never raw secrets
+2. Runtime settings
+   - support_email
+   - premium_cta_text
+   - maintenance_message
+   - marketing_banner_enabled
+   - gumroad_checkout_url_override
+   - any other simple non-secret runtime settings already appropriate in codebase
+
+F. Support tools
+- manual grant premium
+- manual revoke premium
+- link purchase
+- optional mark refund / revoke access
+- all requiring reason
+- all logged
+
+================================
+PART 4 — UI/UX IMPROVEMENTS
+================================
+
+Improve the UI significantly but keep it lean.
+
+Requirements:
+- use current design system / styles if available
+- otherwise implement clean, modern, minimal admin UI
+- clear section layout
+- better spacing, hierarchy, cards, tables, and forms
+- responsive on laptop and tablet
+- good empty states
+- loading states
+- success/error toasts or inline feedback
+- destructive actions visually distinct
+- sticky or clear nav for admin sections
+- search UX should feel good
+- do not spend time on flashy animation
+
+Fix current UX issues:
+- empty admin screen is too bare
+- current search experience is unclear
+- current settings tab is not enough
+- current panel does not feel operationally complete
+
+================================
+PART 5 — SECURITY / LEAK PREVENTION
+================================
+
+Implement or verify all of this:
+
+1. Backend-only secrets
+2. No raw secret values in admin UI
+3. Strict admin route checks on every admin API
+4. Audit logging for all manual actions
+5. Reason required for:
+   - grant premium
+   - revoke premium
+   - link purchase
+   - settings change
+6. Input validation on all admin actions
+7. Safe error handling
+   - do not leak internals to UI
+8. Rate limit admin routes if practical
+9. Optional recent-login check for sensitive actions if practical
+10. Ensure normal users can never hit admin APIs successfully
+
+If something is partially implemented already, improve it rather than duplicating it.
+
+================================
+PART 6 — SETTINGS FOR LIVE OPERATIONS
+================================
+
+I want the admin panel to include all settings needed for live operation, but only the safe ones in frontend.
+
+Implement:
+- config health page
+- runtime settings page
+- clear separation between:
+  - environment-backed config (read-only status)
+  - DB-backed app settings (editable if non-secret)
+
+Environment-backed config status should cover at least:
+- APP_URL
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
+- GUMROAD_WEBHOOK_SECRET
+- GUMROAD_PRODUCT_PERMALINK
+- VITE_GUMROAD_URL
+- ADMIN_EMAIL
+
+For each:
+- show configured yes/no
+- show warning if missing
+- never return raw secret values
+- for safe public URLs, you may show masked or explicit value only if appropriate
+
+DB-backed runtime settings should be editable only for allowlisted keys.
+Do not make a generic arbitrary key-value editor without restrictions.
+
+================================
+PART 7 — ADMIN API EXPANSION
+================================
+
+Add or improve secure admin routes, matching current project style.
+
+Minimum routes I want after upgrade:
+- GET /api/admin/overview
+- GET /api/admin/users/search?email=
+- GET /api/admin/users/:id
+- POST /api/admin/grant-premium
+- POST /api/admin/revoke-premium
+- POST /api/admin/link-purchase
+- GET /api/admin/purchases
+- GET /api/admin/logs
+- GET /api/admin/config
+- GET /api/admin/settings
+- POST /api/admin/settings
+
+If route names should be adjusted to match existing patterns, do so cleanly.
+
+Each must:
+- verify auth
+- verify admin role
+- validate inputs
+- return clean typed responses
+- fail safely
+
+================================
+PART 8 — DATABASE / MIGRATIONS
+================================
+
+Audit current schema first.
+
+If needed, add a new safe migration, for example:
+migrations/004_admin_panel_upgrade.sql
+
+Only include what is actually missing.
+
+Possible additions if useful:
+- indexes for search/filter performance
+- safer constraints
+- additional app_settings seeds
+- optional purchase status indexes
+- admin_logs action index
+- updated_at triggers if missing
+
+Do not make destructive changes.
+Use idempotent-safe SQL where practical.
+
+================================
+PART 9 — ADMIN PAGE STRUCTURE
+================================
+
+Preferred route structure:
+- /admin/login
+- /admin
+- /admin/users
+- /admin/purchases
+- /admin/logs
+- /admin/settings
+
+If a smaller structure is better for the current codebase, keep it compact but still operationally complete.
+
+Need:
+- admin layout shell
+- nav tabs or sidebar
+- protected routes
+- better default landing state
+- user search + detail workflow
+- overview dashboard as default landing screen
+
+================================
+PART 10 — DELIVERABLES
+================================
+
+At the end, provide:
+
+1. What you found in the current codebase
+2. What you changed
+3. Files changed
+4. Any new migration file
+5. Any new routes
+6. Any new env vars needed
+7. Any Supabase dashboard changes needed
+8. Exact SQL to promote my account if still needed
+9. Exact test plan
+10. A final checklist
+
+================================
+CHECKLIST FORMAT REQUIRED
+================================
+
+Output exactly these:
+
+CHECKLIST 1 — Build/Setup Now
+Include:
+- migrations to run
+- routes added
+- components/pages added
+- env vars to verify
+- Supabase settings to verify
+- how to sign in to admin
+- how to test overview
+- how to test user search
+- how to test grant/revoke
+- how to test purchases
+- how to test settings
+- how to verify no secrets leak
+
+CHECKLIST 2 — Live Ops Ready
+Include:
+- pre-launch admin checks
+- what to verify before taking payments
+- what to monitor after launch
+- support flows to rehearse
+- what can wait until later
+
+================================
+IMPLEMENTATION STYLE
+================================
+
+- Keep it practical
+- Keep it secure
+- Improve UX clearly
+- Do not overengineer
+- Reuse existing code
+- Preserve current app behavior
+- Keep future transfer to Vercel easy
+- Prefer small focused files
+- No unnecessary libraries
+- Add comments only where useful
+
+START by auditing the current admin implementation and then implement the upgraded version directly in the codebase.

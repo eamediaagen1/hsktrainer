@@ -34,26 +34,122 @@ const SETTINGS_ALLOWLIST = new Set([
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/admin/users  — paginated list of all users
+// GET /api/admin/overview  — dashboard aggregate stats
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/admin/overview", async (_req, res) => {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+
+  const [
+    totalUsers,
+    premiumUsers,
+    signups7d,
+    purchases7d,
+    refundsTotal,
+    unlinked,
+    recentLogs,
+  ] = await Promise.all([
+    supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true }),
+    supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("is_premium", true),
+    supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", sevenDaysAgo),
+    supabaseAdmin
+      .from("purchases")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", sevenDaysAgo),
+    supabaseAdmin
+      .from("purchases")
+      .select("id", { count: "exact", head: true })
+      .eq("refunded", true),
+    supabaseAdmin
+      .from("purchases")
+      .select("id", { count: "exact", head: true })
+      .is("user_id", null)
+      .eq("refunded", false),
+    supabaseAdmin
+      .from("admin_logs")
+      .select(
+        "id, action, reason, created_at, admin_user_id, target_user_id, profiles!admin_logs_admin_user_id_fkey(email)"
+      )
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+
+  res.json({
+    total_users: totalUsers.count ?? 0,
+    premium_users: premiumUsers.count ?? 0,
+    signups_7d: signups7d.count ?? 0,
+    purchases_7d: purchases7d.count ?? 0,
+    refunds_total: refundsTotal.count ?? 0,
+    unlinked_purchases: unlinked.count ?? 0,
+    recent_logs: recentLogs.data ?? [],
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/admin/users?q=fragment  — list users (with optional partial email search)
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/admin/users", async (req, res) => {
-  const { data, error } = await supabaseAdmin
+  const q = (req.query.q as string | undefined)?.toLowerCase().trim();
+
+  let query = supabaseAdmin
     .from("profiles")
     .select(
       "id, email, is_premium, premium_source, premium_granted_at, gumroad_email, role, created_at, updated_at"
     )
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(100);
 
+  if (q) {
+    query = query.ilike("email", `%${q}%`);
+  }
+
+  const { data, error } = await query;
   if (error) {
     res.status(500).json({ error: "Failed to fetch users" });
     return;
   }
-  res.json(data);
+  res.json(data ?? []);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/admin/user?email=  — full detail for one user (search by email)
+// GET /api/admin/users/:id  — full detail for one user (by UUID)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/admin/users/:id", async (req, res) => {
+  const userId = req.params.id?.trim();
+  if (!userId) {
+    res.status(400).json({ error: "User ID is required" });
+    return;
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select(
+      "id, email, is_premium, premium_source, premium_granted_at, gumroad_email, role, created_at, updated_at"
+    )
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError) {
+    res.status(500).json({ error: "DB error fetching profile" });
+    return;
+  }
+  if (!profile) {
+    res.status(404).json({ error: "No user found with that ID" });
+    return;
+  }
+
+  await resolveUserDetail(profile, res);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/admin/user?email=  — full detail for one user (by email, legacy)
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/admin/user", async (req, res) => {
   const email = (req.query.email as string | undefined)?.toLowerCase().trim();
@@ -62,7 +158,6 @@ router.get("/admin/user", async (req, res) => {
     return;
   }
 
-  // 1. Profile
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
     .select(
@@ -80,77 +175,88 @@ router.get("/admin/user", async (req, res) => {
     return;
   }
 
-  // 2. Purchases — by user_id OR by buyer_email (catches unlinked purchases)
-  const { data: purchases } = await supabaseAdmin
-    .from("purchases")
-    .select(
-      "id, sale_id, buyer_email, product_permalink, price_cents, refunded, user_id, created_at, updated_at"
-    )
-    .or(`user_id.eq.${profile.id},buyer_email.eq.${email}`)
-    .order("created_at", { ascending: false });
+  await resolveUserDetail(profile, res);
+});
 
-  // 3. Progress summary
-  const { count: savedWordCount } = await supabaseAdmin
-    .from("saved_words")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", profile.id);
+// Shared detail resolver (used by both /user?email and /users/:id)
+async function resolveUserDetail(profile: Record<string, unknown>, res: import("express").Response) {
+  const id = profile.id as string;
+  const email = profile.email as string;
 
-  const { data: lastWord } = await supabaseAdmin
-    .from("saved_words")
-    .select("created_at")
-    .eq("user_id", profile.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  // 4. Recent admin logs for this user
-  const { data: logs } = await supabaseAdmin
-    .from("admin_logs")
-    .select(
-      "id, action, reason, meta, created_at, admin_user_id, profiles!admin_logs_admin_user_id_fkey(email)"
-    )
-    .eq("target_user_id", profile.id)
-    .order("created_at", { ascending: false })
-    .limit(20);
+  const [purchasesResult, savedWordCount, lastWord, logsResult] = await Promise.all([
+    supabaseAdmin
+      .from("purchases")
+      .select("id, sale_id, buyer_email, product_permalink, price_cents, refunded, user_id, created_at, updated_at")
+      .or(`user_id.eq.${id},buyer_email.eq.${email}`)
+      .order("created_at", { ascending: false }),
+    supabaseAdmin
+      .from("saved_words")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", id),
+    supabaseAdmin
+      .from("saved_words")
+      .select("created_at")
+      .eq("user_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("admin_logs")
+      .select("id, action, reason, meta, created_at, admin_user_id, profiles!admin_logs_admin_user_id_fkey(email)")
+      .eq("target_user_id", id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
 
   res.json({
     profile,
-    purchases: purchases ?? [],
+    purchases: purchasesResult.data ?? [],
     progress_summary: {
-      total_saved_words: savedWordCount ?? 0,
-      last_activity: lastWord?.created_at ?? null,
+      total_saved_words: savedWordCount.count ?? 0,
+      last_activity: lastWord.data?.created_at ?? null,
     },
-    recent_logs: logs ?? [],
+    recent_logs: logsResult.data ?? [],
   });
-});
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/admin/purchases  — all purchases
+// GET /api/admin/purchases?filter=all|paid|refunded|linked|unlinked
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/admin/purchases", async (req, res) => {
-  const { data, error } = await supabaseAdmin
+  const filter = (req.query.filter as string | undefined) ?? "all";
+
+  let query = supabaseAdmin
     .from("purchases")
-    .select(
-      "id, sale_id, buyer_email, product_permalink, price_cents, refunded, user_id, created_at, updated_at"
-    )
+    .select("id, sale_id, buyer_email, product_permalink, price_cents, refunded, user_id, created_at, updated_at")
     .order("created_at", { ascending: false })
     .limit(200);
 
+  if (filter === "paid")      query = query.eq("refunded", false);
+  if (filter === "refunded")  query = query.eq("refunded", true);
+  if (filter === "linked")    query = query.not("user_id", "is", null);
+  if (filter === "unlinked")  query = query.is("user_id", null).eq("refunded", false);
+
+  const { data, error } = await query;
   if (error) {
     res.status(500).json({ error: "Failed to fetch purchases" });
     return;
   }
-  res.json(data);
+  res.json(data ?? []);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/admin/grant-premium
-// Body: { user_id, reason? }
+// Body: { user_id, reason }  — reason is REQUIRED
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/admin/grant-premium", async (req, res) => {
   const { user_id, reason } = req.body as { user_id?: string; reason?: string };
+
   if (!user_id) {
     res.status(400).json({ error: "user_id is required" });
+    return;
+  }
+  if (!reason?.trim()) {
+    res.status(400).json({ error: "reason is required for grant_premium" });
     return;
   }
 
@@ -170,21 +276,23 @@ router.post("/admin/grant-premium", async (req, res) => {
     return;
   }
 
-  await writeLog(req.user!.id, user_id, "grant_premium", reason, {
-    granted_at: now,
-  });
-
+  await writeLog(req.user!.id, user_id, "grant_premium", reason, { granted_at: now });
   res.json({ success: true });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/admin/revoke-premium
-// Body: { user_id, reason? }
+// Body: { user_id, reason }  — reason is REQUIRED
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/admin/revoke-premium", async (req, res) => {
   const { user_id, reason } = req.body as { user_id?: string; reason?: string };
+
   if (!user_id) {
     res.status(400).json({ error: "user_id is required" });
+    return;
+  }
+  if (!reason?.trim()) {
+    res.status(400).json({ error: "reason is required for revoke_premium" });
     return;
   }
 
@@ -204,17 +312,13 @@ router.post("/admin/revoke-premium", async (req, res) => {
     return;
   }
 
-  await writeLog(req.user!.id, user_id, "revoke_premium", reason, {
-    revoked_at: now,
-  });
-
+  await writeLog(req.user!.id, user_id, "revoke_premium", reason, { revoked_at: now });
   res.json({ success: true });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/admin/link-purchase
 // Body: { user_id, purchase_id, reason? }
-// Links an unlinked purchase row to a specific user and syncs their premium.
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/admin/link-purchase", async (req, res) => {
   const { user_id, purchase_id, reason } = req.body as {
@@ -228,10 +332,9 @@ router.post("/admin/link-purchase", async (req, res) => {
     return;
   }
 
-  // Fetch the purchase
   const { data: purchase, error: purchaseError } = await supabaseAdmin
     .from("purchases")
-    .select("id, buyer_email, refunded")
+    .select("id, buyer_email, refunded, user_id")
     .eq("id", purchase_id)
     .maybeSingle();
 
@@ -240,7 +343,11 @@ router.post("/admin/link-purchase", async (req, res) => {
     return;
   }
 
-  // Link purchase to user
+  if (purchase.user_id) {
+    res.status(400).json({ error: "Purchase is already linked to a user" });
+    return;
+  }
+
   const { error: linkError } = await supabaseAdmin
     .from("purchases")
     .update({ user_id, updated_at: new Date().toISOString() })
@@ -251,7 +358,6 @@ router.post("/admin/link-purchase", async (req, res) => {
     return;
   }
 
-  // If purchase is not refunded, grant premium and store the buyer email
   if (!purchase.refunded) {
     const now = new Date().toISOString();
     await supabaseAdmin
@@ -275,10 +381,11 @@ router.post("/admin/link-purchase", async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/admin/logs?user_id=  — recent admin logs (optionally filtered)
+// GET /api/admin/logs?user_id=&action=  — recent admin logs
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/admin/logs", async (req, res) => {
   const targetUserId = req.query.user_id as string | undefined;
+  const action = req.query.action as string | undefined;
 
   let query = supabaseAdmin
     .from("admin_logs")
@@ -288,12 +395,10 @@ router.get("/admin/logs", async (req, res) => {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  if (targetUserId) {
-    query = query.eq("target_user_id", targetUserId);
-  }
+  if (targetUserId) query = query.eq("target_user_id", targetUserId);
+  if (action && action !== "all") query = query.eq("action", action);
 
   const { data, error } = await query;
-
   if (error) {
     res.status(500).json({ error: "Failed to fetch logs" });
     return;
@@ -306,24 +411,25 @@ router.get("/admin/logs", async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/admin/config", (_req, res) => {
   const vars = {
-    SUPABASE_URL: !!process.env.SUPABASE_URL,
-    SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+    SUPABASE_URL:              !!process.env.SUPABASE_URL,
+    SUPABASE_ANON_KEY:         !!process.env.SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    GUMROAD_WEBHOOK_SECRET: !!process.env.GUMROAD_WEBHOOK_SECRET,
+    GUMROAD_WEBHOOK_SECRET:    !!process.env.GUMROAD_WEBHOOK_SECRET,
     GUMROAD_PRODUCT_PERMALINK: !!process.env.GUMROAD_PRODUCT_PERMALINK,
-    APP_URL: !!process.env.APP_URL,
+    APP_URL:                   !!process.env.APP_URL,
   };
 
   const warnings: string[] = [];
-  if (!vars.SUPABASE_URL) warnings.push("SUPABASE_URL not set — auth will fail");
+  if (!vars.SUPABASE_URL)
+    warnings.push("SUPABASE_URL not set — auth will fail");
   if (!vars.SUPABASE_SERVICE_ROLE_KEY)
     warnings.push("SUPABASE_SERVICE_ROLE_KEY not set — all protected routes return 401");
   if (!vars.GUMROAD_WEBHOOK_SECRET)
     warnings.push("GUMROAD_WEBHOOK_SECRET not set — webhook endpoint is disabled");
   if (!vars.APP_URL)
-    warnings.push("APP_URL not set — CORS is open to all origins");
+    warnings.push("APP_URL not set — CORS is open to all origins (acceptable in dev)");
   if (!vars.GUMROAD_PRODUCT_PERMALINK)
-    warnings.push("GUMROAD_PRODUCT_PERMALINK not set — any Gumroad product will be accepted");
+    warnings.push("GUMROAD_PRODUCT_PERMALINK not set — any Gumroad product will grant premium");
 
   res.json({
     env: vars,
@@ -352,7 +458,6 @@ router.get("/admin/settings", async (_req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/admin/settings
 // Body: { key, value, reason? }
-// Updates a single non-secret app setting (allowlisted keys only).
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/admin/settings", async (req, res) => {
   const { key, value, reason } = req.body as {
@@ -378,7 +483,7 @@ router.post("/admin/settings", async (req, res) => {
     .from("app_settings")
     .upsert({
       key,
-      value: value,
+      value,
       updated_at: new Date().toISOString(),
       updated_by: req.user!.id,
     });
@@ -389,7 +494,6 @@ router.post("/admin/settings", async (req, res) => {
   }
 
   await writeLog(req.user!.id, null, "update_setting", reason, { key, value });
-
   res.json({ success: true });
 });
 

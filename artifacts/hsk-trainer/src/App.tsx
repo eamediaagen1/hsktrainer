@@ -5,19 +5,20 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
-import MarketingPage  from "@/pages/MarketingPage";
-import LandingPage    from "@/pages/LandingPage";
-import AuthCallback   from "@/pages/AuthCallback";
-import LevelSelection from "@/pages/LevelSelection";
-import FlashcardPage  from "@/pages/FlashcardPage";
-import ReviewPage     from "@/pages/ReviewPage";
-import QuizPage       from "@/pages/QuizPage";
-import PhrasesPage    from "@/pages/PhrasesPage";
-import StrokesPage    from "@/pages/StrokesPage";
-import ProgressPage   from "@/pages/ProgressPage";
-import SettingsPage   from "@/pages/SettingsPage";
-import AdminPage      from "@/pages/AdminPage";
-import { AppShell }   from "@/components/AppShell";
+import MarketingPage    from "@/pages/MarketingPage";
+import LandingPage      from "@/pages/LandingPage";
+import AuthCallback     from "@/pages/AuthCallback";
+import LevelSelection   from "@/pages/LevelSelection";
+import FlashcardPage    from "@/pages/FlashcardPage";
+import ReviewPage       from "@/pages/ReviewPage";
+import QuizPage         from "@/pages/QuizPage";
+import PhrasesPage      from "@/pages/PhrasesPage";
+import StrokesPage      from "@/pages/StrokesPage";
+import ProgressPage     from "@/pages/ProgressPage";
+import SettingsPage     from "@/pages/SettingsPage";
+import AdminPage        from "@/pages/AdminPage";
+import AdminLoginPage   from "@/pages/AdminLoginPage";
+import { AppShell }     from "@/components/AppShell";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 
 const queryClient = new QueryClient();
@@ -79,14 +80,19 @@ function Router() {
   if (isPublicRoute) {
     return (
       <Switch>
-        <Route path="/"             component={MarketingPage} />
-        <Route path="/app"          component={LandingPage} />
+        <Route path="/"              component={MarketingPage} />
+        <Route path="/app"           component={LandingPage} />
         <Route path="/auth/callback" component={AuthCallback} />
       </Switch>
     );
   }
 
-  // Admin uses its own layout — no AppShell sidebar
+  // Admin login — standalone, no AppShell, no guard (handles its own auth)
+  if (location.startsWith("/admin/login")) {
+    return <AdminLoginPage />;
+  }
+
+  // All other /admin/* routes — AdminPage handles sub-routing internally
   if (location.startsWith("/admin")) {
     return <AdminPage />;
   }

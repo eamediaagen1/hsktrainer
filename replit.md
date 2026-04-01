@@ -88,32 +88,66 @@ workspace/
 
 Accessible at `/admin` — requires `role = 'admin'` in the `profiles` table. Has its own layout (no sidebar). All actions are server-verified.
 
+### Routes
+- `/admin/login` — dedicated admin verification page (password-only; sets 60-min session)
+- `/admin` — Dashboard (overview stats)
+- `/admin/users` — User search + detail panel
+- `/admin/purchases` — Purchase list with filter chips
+- `/admin/logs` — Admin audit log with action filter
+- `/admin/settings` — Env health + runtime settings editor
+
+### Identity Verification
+The admin panel is viewable in read-only mode once you're signed in as admin. To enable write actions (grant/revoke/link/settings), you must verify at `/admin/login` using email + password. Verification is stored in `sessionStorage` and expires after 60 minutes. The server independently verifies admin role on every API call regardless.
+
 ### Features
-- **Users tab**: search by email; view profile, premium status, linked purchases, progress summary; grant/revoke premium with optional reason (all logged); link unlinked Gumroad purchases to a user
-- **Config tab**: environment health check (boolean only — no secret values exposed); editable `app_settings` table for non-secret runtime values
+- **Dashboard**: 6 stat cards (total users, premium users, 7-day signups, 7-day purchases, refunds, unlinked purchases) + recent admin activity feed
+- **Users**: partial email search (live, debounced), user list, click-to-expand detail panel with profile / premium / progress / purchases / audit log; Grant/Revoke/Link actions require reason + verified identity
+- **Purchases**: list with filter chips (All / Paid / Refunded / Linked / Unlinked); shows linkage status and guidance
+- **Logs**: admin log feed filtered by action type (grants, revokes, link, settings)
+- **Config**: env health grid (true/false only — no secrets exposed); editable `app_settings` with allowlist enforcement and change logging
 
 ### Admin API Routes (all protected by `requireAuth + requireAdmin`)
-- `GET /api/admin/users` — list all users
-- `GET /api/admin/user?email=` — full user detail (profile + purchases + progress + logs)
-- `POST /api/admin/grant-premium` — grant premium, logs action
-- `POST /api/admin/revoke-premium` — revoke premium, logs action
-- `POST /api/admin/link-purchase` — link unlinked purchase to user, logs action
-- `GET /api/admin/logs` — list admin logs (optional `?user_id=` filter)
-- `GET /api/admin/config` — env health check (true/false only per var, no raw values)
+- `GET /api/admin/overview` — dashboard aggregate stats
+- `GET /api/admin/users?q=fragment` — user list with partial email search
+- `GET /api/admin/users/:id` — full user detail by UUID
+- `GET /api/admin/user?email=` — full user detail by email (legacy)
+- `GET /api/admin/purchases?filter=all|paid|refunded|linked|unlinked`
+- `POST /api/admin/grant-premium` — requires `reason` (400 if missing)
+- `POST /api/admin/revoke-premium` — requires `reason` (400 if missing)
+- `POST /api/admin/link-purchase` — links purchase; guards against re-linking
+- `GET /api/admin/logs?user_id=&action=` — filtered admin log
+- `GET /api/admin/config` — env health check (true/false only, no raw values)
 - `GET /api/admin/settings` — list app_settings
-- `POST /api/admin/settings` — update allowlisted app_setting key (logged)
+- `POST /api/admin/settings` — update allowlisted key (logged)
 
 ### Admin Audit Log (`admin_logs` table)
-Every grant, revoke, link, and setting change writes a row with admin user ID, target user ID, action name, optional reason, and metadata JSON.
+Every grant, revoke, link, and setting change writes a row with admin user ID, target user ID, action name, required reason, and metadata JSON.
+
+### Frontend file structure
+```
+src/pages/
+  AdminLoginPage.tsx        — /admin/login (standalone, no AppShell)
+  AdminPage.tsx             — /admin/* shell (tabs + auth guard)
+  admin/
+    adminTypes.ts           — shared TypeScript types
+    adminUtils.tsx          — helpers: fmt, StatusBadge, isAdminVerified, etc.
+    DashboardTab.tsx
+    UsersTab.tsx            — UserListItem + UserDetailPanel
+    PurchasesTab.tsx
+    LogsTab.tsx
+    ConfigTab.tsx
+```
 
 ## Setup Checklist
 
 1. Run `migrations/001_supabase_schema.sql` in Supabase SQL editor
-2. Run `migrations/002_admin_tables.sql` in Supabase SQL editor (adds `admin_logs`, `app_settings`, `updated_at` on profiles)
-3. Set all secrets listed above in Replit Secrets
-4. After first sign-in, promote yourself to admin: `UPDATE profiles SET role = 'admin' WHERE email = 'YOUR_EMAIL';`
-5. Configure Gumroad webhook URL: `https://<APP_URL>/api/gumroad/webhook?secret=<GUMROAD_WEBHOOK_SECRET>`
-6. Access admin panel at `<APP_URL>/admin`
+2. Run `migrations/002_admin_tables.sql` in Supabase SQL editor
+3. Run `migrations/003_password_auth_support.sql` in Supabase SQL editor
+4. Run `migrations/004_admin_panel_upgrade.sql` in Supabase SQL editor (indexes + seed)
+5. Set all secrets listed above in Replit Secrets
+6. After first sign-in, promote yourself to admin: `UPDATE profiles SET role = 'admin' WHERE email = 'YOUR_EMAIL';`
+7. Configure Gumroad webhook URL: `https://<APP_URL>/api/gumroad/webhook?secret=<GUMROAD_WEBHOOK_SECRET>`
+8. Access admin panel at `<APP_URL>/admin` — verify at `/admin/login` to enable write actions
 
 ## TypeScript & Composite Projects
 
