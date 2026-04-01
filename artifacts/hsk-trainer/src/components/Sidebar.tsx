@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "@/contexts/sidebar-context";
-import { useStore } from "@/hooks/use-store";
+import { useAuth } from "@/contexts/auth-context";
+import { useSavedWords } from "@/hooks/use-saved-words";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
@@ -353,12 +354,14 @@ function SidebarContent({
 export function Sidebar() {
   const [location, setLocation] = useLocation();
   const { isExpanded, isMobileOpen, toggleExpanded, closeMobile } = useSidebar();
-  const { email, logout, getDueCards } = useStore();
+  const { user, signOut } = useAuth();
+  const { getDueCards } = useSavedWords();
+  const email = user?.email ?? null;
 
   const dueCount = getDueCards().length;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     setLocation("/");
     closeMobile();
   };

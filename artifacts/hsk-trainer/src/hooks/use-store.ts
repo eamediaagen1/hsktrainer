@@ -1,109 +1,49 @@
-import { useState, useEffect } from "react";
-
-interface SavedCard {
-  id: string;
-  nextReview: number;
-  interval: number; // in days
-}
+/**
+ * @deprecated
+ * use-store.ts is a compatibility shim.
+ * New code should use:
+ *   - useAuth()        from @/contexts/auth-context   → user, session, signIn, signOut
+ *   - useProfile()     from @/hooks/use-profile        → is_premium, role
+ *   - useSavedWords()  from @/hooks/use-saved-words    → card operations
+ */
+import { useAuth } from "@/contexts/auth-context";
+import { useProfile } from "@/hooks/use-profile";
+import { useSavedWords } from "@/hooks/use-saved-words";
 
 export function useStore() {
-  // Email state
-  const [email, setEmail] = useState<string | null>(() => {
-    return typeof window !== "undefined" ? localStorage.getItem("hsk_email") : null;
-  });
+  const { user, signOut } = useAuth();
+  const { data: profile } = useProfile();
+  const {
+    isCardSaved,
+    getDueCards,
+    toggleSaveCard,
+    updateCardReview,
+    savedWords,
+  } = useSavedWords();
 
-  // Saved cards state
-  const [savedCards, setSavedCards] = useState<Record<string, SavedCard>>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("hsk_saved_cards");
-      return stored ? JSON.parse(stored) : {};
-    }
-    return {};
-  });
-
-  /**
-   * isPaid — whether the user has purchased premium access.
-   *
-   * Currently backed by localStorage. After a successful Gumroad purchase the
-   * LandingPage calls GET /api/check-access and, if the server returns
-   * { isPaid: true }, calls unlockPremium() which sets this flag.
-   *
-   * When Supabase is configured, replace the localStorage read/write here with
-   * a call to supabase.auth.getUser() and check the `is_paid` column on the
-   * `profiles` table.
-   */
-  const [isPaid, setIsPaid] = useState<boolean>(() => {
-    return typeof window !== "undefined"
-      ? localStorage.getItem("hsk_is_paid") === "true"
-      : false;
-  });
-
-  useEffect(() => {
-    if (email) {
-      localStorage.setItem("hsk_email", email);
-    } else {
-      localStorage.removeItem("hsk_email");
-    }
-  }, [email]);
-
-  useEffect(() => {
-    localStorage.setItem("hsk_saved_cards", JSON.stringify(savedCards));
-  }, [savedCards]);
-
-  useEffect(() => {
-    localStorage.setItem("hsk_is_paid", isPaid ? "true" : "false");
-  }, [isPaid]);
-
-  const login = (newEmail: string) => setEmail(newEmail);
-  const logout = () => setEmail(null);
-  const unlockPremium = () => setIsPaid(true);
-
-  const toggleSaveCard = (id: string) => {
-    setSavedCards((prev) => {
-      const newCards = { ...prev };
-      if (newCards[id]) {
-        delete newCards[id];
-      } else {
-        newCards[id] = { id, nextReview: Date.now(), interval: 0 };
-      }
-      return newCards;
-    });
-  };
-
-  const updateCardReview = (id: string, difficulty: "hard" | "good" | "easy") => {
-    setSavedCards((prev) => {
-      const card = prev[id];
-      if (!card) return prev;
-
-      let newInterval = card.interval;
-      if (difficulty === "hard") newInterval = 1;
-      else if (difficulty === "good") newInterval = Math.max(3, card.interval * 2);
-      else if (difficulty === "easy") newInterval = Math.max(7, card.interval * 3);
-
-      const nextReview = Date.now() + newInterval * 24 * 60 * 60 * 1000;
-
-      return {
-        ...prev,
-        [id]: { ...card, interval: newInterval, nextReview },
-      };
-    });
-  };
-
-  const getDueCards = () => {
-    const now = Date.now();
-    return Object.values(savedCards)
-      .filter((card) => card.nextReview <= now)
-      .map((c) => c.id);
-  };
-
-  const isCardSaved = (id: string) => !!savedCards[id];
+  // Build a savedCards-shaped object for any legacy consumers
+  const savedCards: Record<string, { id: string; nextReview: number; interval: number }> =
+    Object.fromEntries(
+      savedWords.map((w) => [
+        w.word_id,
+        {
+          id: w.word_id,
+          nextReview: new Date(w.next_review).getTime(),
+          interval: w.interval_days,
+        },
+      ])
+    );
 
   return {
-    email,
-    isPaid,
-    login,
-    logout,
-    unlockPremium,
+    email: user?.email ?? null,
+    isPaid: profile?.is_premium ?? false,
+    login: (_email: string) => {
+      /* no-op: login is now via magic link – see LandingPage */
+    },
+    logout: signOut,
+    unlockPremium: () => {
+      /* no-op: premium is server-side – use /api/premium/sync */
+    },
     savedCards,
     toggleSaveCard,
     updateCardReview,

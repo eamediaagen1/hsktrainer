@@ -1,0 +1,97 @@
+Use your judgment for anything not finalized yet. Build it so it works now on Replit, and make host/domain values easy to change later from environment variables and dashboard settings.
+
+Answers:
+
+Group A — Replit & Deployment
+- Frontend and API are served from the same Replit app, one repo, one deployment.
+- Production URL is not final yet. Build it to work with the current Replit URL first.
+- Custom domain is not connected yet. Use the .replit.app domain for now.
+- API base path should be same-origin and use /api.
+
+Group B — Supabase
+- Assume profiles, progress, and purchases/premium_access may need cleanup or adjustment. If easier, provide the SQL to create or alter them safely.
+- If existing schema is incomplete, normalize it into the simplest production-ready version.
+- Magic link redirect path: /auth/callback
+- Assume RLS is not fully configured yet. Set it up properly.
+
+Group C — Gumroad
+- Product permalink is not finalized in this prompt. Leave it as a clear placeholder/env var for me to fill later.
+- Support refund/reversal handling in the architecture, but make revocation easy to do manually if Gumroad event coverage is inconsistent.
+- Yes, support Gumroad coupons.
+- Treat coupon purchases as valid premium purchases as long as the purchase is legitimate, including discounted or 100%-off coupon flows if Gumroad marks them as successful purchases.
+
+Group D — Premium Content Schema
+- Assume HSK 2–6 content is currently still in the frontend bundle.
+- As part of this work, move premium content protection to the backend/Supabase path.
+- HSK1 remains free.
+- HSK2–HSK6 must not be exposed without server-side authorization.
+- If needed, design the lessons table with a simple field like hsk_level integer plus server-side premium rules.
+
+Group E — localStorage Migration
+- Yes, migrate useful existing localStorage progress to Supabase on first authenticated sign-in if possible.
+- Current localStorage keys:
+  - hsk_email
+  - hsk_saved_cards
+  - hsk_is_paid
+- Never trust hsk_is_paid. Ignore it for authorization.
+- Migrate only study/progress data.
+- If hsk_saved_cards does not fit the current progress schema well, add the simplest extra table or adaptation needed.
+
+Group F — Admin Access
+- Start with one admin email from ADMIN_EMAIL.
+- Admin only needs basic capabilities:
+  - manually grant premium
+  - manually revoke premium
+  - view users
+  - view purchases / premium access records
+- Keep admin minimal. Prefer simple protected admin API routes and/or Supabase dashboard over building a complex admin panel.
+
+Group G — Analytics & Error Logging
+- Use your judgment.
+- Keep error logging lightweight and launch-friendly.
+- If adding a provider is optional, default to structured server logs now and make Sentry/PostHog optional later.
+- Analytics are optional for launch. Keep hooks/placeholders ready, but do not block launch on analytics.
+
+Group H — Rate Limiting & Bot Protection
+- Default to rate limiting only for launch.
+- No CAPTCHA unless you strongly believe it is necessary.
+- Prioritize protection on:
+  - magic link request endpoint
+  - premium sync endpoint
+  - Gumroad webhook endpoint
+  - auth-related endpoints
+- Choose simple Replit-friendly limits.
+
+Important implementation preference:
+- Anything related to hostnames, domains, redirect URLs, CORS origins, webhook URLs, and app URLs must be configurable through environment variables so I can change them later without rewriting logic.
+- Use placeholders for all values not finalized yet.
+- Build the easiest working version first, then clearly document what I need to update later when I switch domains or hosting details.
+
+Additional requirement:
+At the end, include a section called:
+“Later: Host/Domain Change Procedure”
+This section must give me a step-by-step checklist for what to update later when I switch from Replit URL to my final custom domain, including:
+- Replit app URL / deployment settings
+- Supabase site URL
+- Supabase redirect URLs
+- Gumroad webhook URL
+- APP_URL env var
+- CORS allowlist
+- any auth callback URLs
+- any frontend env vars
+- any API base URLs
+- post-change verification checklist
+
+Now proceed with:
+1. final architecture
+2. SQL/schema changes
+3. API routes
+4. RLS policies
+5. middleware/auth guards
+6. Gumroad webhook flow
+7. premium sync flow
+8. progress migration flow
+9. Replit env var template
+10. security hardening
+11. launch checklist
+12. Later: Host/Domain Change Procedure

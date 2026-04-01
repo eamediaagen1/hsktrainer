@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { ChevronLeft, Star, Sparkles, CheckCircle2, Volume2 } from "lucide-react";
-import { hskData } from "@/data/hskData";
-import { useStore } from "@/hooks/use-store";
+import { useSavedWords } from "@/hooks/use-saved-words";
 import { Flashcard } from "@/components/Flashcard";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -10,18 +9,14 @@ import { speakChinese } from "@/lib/speech";
 
 export default function ReviewPage() {
   const [, setLocation] = useLocation();
-  const { savedCards, updateCardReview } = useStore();
+  const { getDueWords, updateCardReview } = useSavedWords();
 
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
-  const reviewQueue = useMemo(() => {
-    const now = Date.now();
-    const dueIds = Object.keys(savedCards).filter((id) => savedCards[id].nextReview <= now);
-    return hskData.filter((w) => dueIds.includes(w.id));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Snapshot at mount so queue doesn't shrink mid-review
+  const reviewQueue = useMemo(() => getDueWords(), []);
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -31,7 +26,7 @@ export default function ReviewPage() {
 
   const handleSpeak = useCallback(() => {
     const entry = reviewQueue[currentIndex];
-    if (!entry) return;
+    if (!entry?.word) return;
     const didSpeak = speakChinese(entry.word);
     if (didSpeak) {
       setIsSpeaking(true);
@@ -41,7 +36,7 @@ export default function ReviewPage() {
   }, [reviewQueue, currentIndex]);
 
   const handleRating = (difficulty: "hard" | "good" | "easy") => {
-    const wordId = reviewQueue[currentIndex].id;
+    const wordId = reviewQueue[currentIndex].word_id;
     updateCardReview(wordId, difficulty);
     setTimeout(() => setCurrentIndex((prev) => prev + 1), 400);
   };

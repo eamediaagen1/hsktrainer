@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,6 +7,7 @@ import NotFound from "@/pages/not-found";
 
 import MarketingPage  from "@/pages/MarketingPage";
 import LandingPage    from "@/pages/LandingPage";
+import AuthCallback   from "@/pages/AuthCallback";
 import LevelSelection from "@/pages/LevelSelection";
 import FlashcardPage  from "@/pages/FlashcardPage";
 import ReviewPage     from "@/pages/ReviewPage";
@@ -15,11 +17,31 @@ import StrokesPage    from "@/pages/StrokesPage";
 import ProgressPage   from "@/pages/ProgressPage";
 import SettingsPage   from "@/pages/SettingsPage";
 import { AppShell }   from "@/components/AppShell";
+import { AuthProvider, useAuth } from "@/contexts/auth-context";
 
 const queryClient = new QueryClient();
 
-// Pages wrapped in the sidebar shell
-function AppPages() {
+// ─── Route guard: redirects unauthenticated users to /app ───────────────────
+function ProtectedPages() {
+  const { user, loading } = useAuth();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/app");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-10 h-10 border-[3px] border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <AppShell>
       <Switch>
@@ -37,32 +59,46 @@ function AppPages() {
   );
 }
 
-// Top-level router: decides whether to show the sidebar shell
+// ─── Top-level router ────────────────────────────────────────────────────────
 function Router() {
   const [location] = useLocation();
-  const isPublicRoute = location === "/" || location === "/app";
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
+
+  // Redirect already-signed-in users away from the login page
+  useEffect(() => {
+    if (location === "/app" && user) {
+      navigate("/levels");
+    }
+  }, [location, user, navigate]);
+
+  const isPublicRoute =
+    location === "/" || location === "/app" || location === "/auth/callback";
 
   if (isPublicRoute) {
     return (
       <Switch>
-        <Route path="/"    component={MarketingPage} />
-        <Route path="/app" component={LandingPage} />
+        <Route path="/"             component={MarketingPage} />
+        <Route path="/app"          component={LandingPage} />
+        <Route path="/auth/callback" component={AuthCallback} />
       </Switch>
     );
   }
 
-  return <AppPages />;
+  return <ProtectedPages />;
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

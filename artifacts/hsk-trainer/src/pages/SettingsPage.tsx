@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Settings, Moon, Sun, Globe, Bell, Shield, ChevronRight, Check } from "lucide-react";
-import { useStore } from "@/hooks/use-store";
+import { useAuth } from "@/contexts/auth-context";
+import { useProfile } from "@/hooks/use-profile";
 import { PageShell } from "@/components/PageShell";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +56,10 @@ type ThemeMode = "light" | "dark" | "system";
 const sectionDelay = (n: number) => ({ duration: 0.3, delay: n * 0.06 });
 
 export default function SettingsPage() {
-  const { email, isPaid } = useStore();
+  const { user } = useAuth();
+  const { data: profile } = useProfile();
+  const email = user?.email ?? null;
+  const isPaid = profile?.is_premium ?? false;
   const [themeMode, setThemeMode] = useState<ThemeMode>("system");
   const [notifications, setNotifications] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);

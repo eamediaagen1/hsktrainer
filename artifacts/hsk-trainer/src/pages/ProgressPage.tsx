@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { BarChart3, Brain, Star, Trophy, Flame, BookOpen } from "lucide-react";
-import { useStore } from "@/hooks/use-store";
-import { hskData } from "@/data/hskData";
+import { useSavedWords } from "@/hooks/use-saved-words";
 import { PageShell } from "@/components/PageShell";
 
 interface StatCardProps {
@@ -31,16 +30,22 @@ function StatCard({ icon: Icon, label, value, sublabel, color }: StatCardProps) 
 }
 
 export default function ProgressPage() {
-  const { savedCards, getDueCards } = useStore();
+  const { savedWords, getDueCards } = useSavedWords();
 
-  const savedCount = Object.keys(savedCards).length;
+  const savedCount = savedWords.length;
   const dueCount = getDueCards().length;
 
+  // Known totals per HSK level
+  const levelTotals: Record<number, number> = {
+    1: 150, 2: 150, 3: 300, 4: 600, 5: 1300, 6: 2500,
+  };
+
   const levelStats = [1, 2, 3, 4, 5, 6].map((lvl) => {
-    const total = hskData.filter((w) => w.hskLevel === lvl).length;
-    const saved = Object.keys(savedCards).filter((id) => {
-      const word = hskData.find((w) => w.id === id);
-      return word?.hskLevel === lvl;
+    const total = levelTotals[lvl] ?? 0;
+    // Extract level from word_id prefix: "hsk2-g1" → 2
+    const saved = savedWords.filter((w) => {
+      const match = w.word_id.match(/^hsk(\d)/);
+      return match ? parseInt(match[1]) === lvl : false;
     }).length;
     const pct = total > 0 ? Math.round((saved / total) * 100) : 0;
     return { lvl, total, saved, pct };

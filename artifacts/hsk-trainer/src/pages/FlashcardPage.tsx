@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, ArrowRight, Star, ChevronLeft, Volume2 } from "lucide-react";
-import { hskData } from "@/data/hskData";
-import { useStore } from "@/hooks/use-store";
+import { ArrowLeft, ArrowRight, Star, ChevronLeft, Volume2, Lock, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { hskData, type VocabWord } from "@/data/hskData";
+import { useSavedWords } from "@/hooks/use-saved-words";
+import { apiFetch } from "@/lib/api";
 import { Flashcard } from "@/components/Flashcard";
 import { cn } from "@/lib/utils";
 import { speakChinese } from "@/lib/speech";
@@ -21,9 +23,23 @@ export default function FlashcardPage() {
   const params = useParams();
   const level = parseInt(params.level || "1");
 
-  const { toggleSaveCard, isCardSaved } = useStore();
+  const { toggleSaveCard, isCardSaved } = useSavedWords();
 
-  const allLevelWords = hskData.filter((w) => w.hskLevel === level);
+  // Level 1 words come from local data (free, no API needed)
+  // Level 2-6 words are fetched from the authenticated API
+  const { data: apiLevel, isLoading: wordsLoading, error: wordsError } = useQuery({
+    queryKey: ["lessons", level],
+    queryFn: () =>
+      apiFetch<{ level: number; words: VocabWord[] }>(`/api/lessons?level=${level}`).then(
+        (r) => r.words
+      ),
+    enabled: level > 1,
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const allLevelWords: VocabWord[] =
+    level === 1 ? hskData.filter((w) => w.hskLevel === 1) : (apiLevel ?? []);
+
   const isHsk1 = level === 1;
   const categories = isHsk1 ? getCategories(allLevelWords) : [];
 
@@ -59,6 +75,46 @@ export default function FlashcardPage() {
       setTimeout(() => setIsSpeaking(false), ms);
     }
   }, [levelWords, safeIndex]);
+
+  // Show loading state while fetching premium-level words
+  if (level > 1 && wordsLoading) {
+    return (
+      <div className="min-h-full flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Loading HSK {level} words…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error/paywall for premium levels
+  if (level > 1 && wordsError) {
+    const isPremiumError = (wordsError as { status?: number })?.status === 403;
+    return (
+      <div className="min-h-full flex items-center justify-center p-4">
+        <div className="text-center max-w-sm space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <Lock className="w-6 h-6 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground">
+            {isPremiumError ? "Premium Required" : "Unable to Load"}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {isPremiumError
+              ? "HSK 2–6 requires a premium subscription. Upgrade to unlock all levels."
+              : "Something went wrong. Please check your connection and try again."}
+          </p>
+          <button
+            onClick={() => setLocation("/levels")}
+            className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
+          >
+            Back to Levels
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (levelWords.length === 0) {
     return (

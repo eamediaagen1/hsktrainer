@@ -1,8 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
-import { ChevronLeft, RotateCcw, CheckCircle2, XCircle, Trophy } from "lucide-react";
+import { ChevronLeft, RotateCcw, CheckCircle2, XCircle, Trophy, Lock, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { hskData, VocabWord } from "@/data/hskData";
+import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type QuestionType = "char-to-meaning" | "meaning-to-char" | "pinyin-to-char";
@@ -63,9 +65,31 @@ export default function QuizPage() {
   const params = useParams();
   const level = parseInt(params.level || "1");
 
-  const levelWords = hskData.filter((w) => w.hskLevel === level);
+  // Fetch premium-level words from the API (level 1 uses local data)
+  const { data: apiLevel, isLoading: wordsLoading, error: wordsError } = useQuery({
+    queryKey: ["lessons", level],
+    queryFn: () =>
+      apiFetch<{ level: number; words: VocabWord[] }>(`/api/lessons?level=${level}`).then(
+        (r) => r.words
+      ),
+    enabled: level > 1,
+    staleTime: 30 * 60 * 1000,
+  });
 
-  const [questions, setQuestions] = useState<Question[]>(() => generateQuiz(levelWords));
+  const levelWords: VocabWord[] =
+    level === 1 ? hskData.filter((w) => w.hskLevel === 1) : (apiLevel ?? []);
+
+  const [questions, setQuestions] = useState<Question[]>(() =>
+    generateQuiz(level === 1 ? hskData.filter((w) => w.hskLevel === 1) : [])
+  );
+
+  // Once API words load for premium levels, generate questions
+  useEffect(() => {
+    if (level > 1 && apiLevel && apiLevel.length > 0) {
+      setQuestions(generateQuiz(apiLevel));
+    }
+  }, [apiLevel, level]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
@@ -105,6 +129,53 @@ export default function QuizPage() {
   }, [levelWords]);
 
   const progress = ((currentIndex + 1) / questions.length) * 100;
+
+  // Loading state for premium levels
+  if (level > 1 && wordsLoading) {
+    return (
+      <div className="min-h-full flex items-center justify-center">
+        <div className="text-center p-8 flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-muted-foreground">Loading HSK {level} quiz…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Paywall / error state for premium levels
+  if (level > 1 && wordsError) {
+    const isPremiumError = (wordsError as { status?: number })?.status === 403;
+    return (
+      <div className="min-h-full flex items-center justify-center p-6">
+        <div className="max-w-sm w-full bg-card border border-border rounded-2xl shadow-lg p-8 text-center flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <Lock className="w-7 h-7 text-amber-600 dark:text-amber-400" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">
+            {isPremiumError ? "Premium Required" : "Failed to Load"}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {isPremiumError
+              ? "HSK 2–6 quizzes require a premium subscription."
+              : "Could not load quiz words. Please try again."}
+          </p>
+          {isPremiumError && (
+            <a
+              href={import.meta.env.VITE_GUMROAD_URL ?? "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+            >
+              Unlock Premium
+            </a>
+          )}
+          <button onClick={() => setLocation("/levels")} className="text-sm text-muted-foreground hover:underline">
+            Back to levels
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (levelWords.length < 4) {
     return (

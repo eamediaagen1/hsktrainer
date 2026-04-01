@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Book, Star, Lock, Trophy, ExternalLink } from "lucide-react";
-import { useStore } from "@/hooks/use-store";
+import { Book, Star, Lock, Trophy, ExternalLink, RefreshCw, CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { useProfile } from "@/hooks/use-profile";
+import { useSavedWords } from "@/hooks/use-saved-words";
+import { apiFetch } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 const levels = [
@@ -14,7 +19,9 @@ const levels = [
   { id: 6, count: 2500, title: "Mastery",            locked: true  },
 ];
 
-const GUMROAD_URL = "https://gumroad.com";
+// Configure via VITE_GUMROAD_URL in Replit Secrets
+const GUMROAD_URL = import.meta.env.VITE_GUMROAD_URL as string | undefined
+  ?? "https://gumroad.com"; // TODO: replace with your product URL
 
 const container = {
   hidden: { opacity: 0 },
@@ -28,9 +35,35 @@ const item = {
 
 export default function LevelSelection() {
   const [, setLocation] = useLocation();
-  const { isPaid, getDueCards } = useStore();
+  const { user } = useAuth();
+  const { data: profile, refetch: refetchProfile } = useProfile();
+  const { getDueCards } = useSavedWords();
+  const qc = useQueryClient();
 
+  const isPremium = profile?.is_premium ?? false;
   const dueCardsCount = getDueCards().length;
+
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
+
+  const handleSyncPremium = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await apiFetch<{ is_premium: boolean; message: string }>("/api/premium/sync", {
+        method: "POST",
+      });
+      setSyncResult(res.message);
+      if (res.is_premium) {
+        await refetchProfile();
+        qc.invalidateQueries({ queryKey: ["profile"] });
+      }
+    } catch {
+      setSyncResult("Sync failed. Please try again.");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   return (
     <PageShell maxWidth="xl">
@@ -59,112 +92,122 @@ export default function LevelSelection() {
         )}
       </div>
 
+      {/* Premium sync banner — shown only to non-premium users */}
+      {!isPremium && (
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl bg-gold/5 border border-gold/20">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">
+              Unlock HSK 2–6 for lifetime access
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Already purchased? Click Sync to activate your access.
+            </p>
+            {syncResult && (
+              <p className="text-xs mt-1 text-foreground/70">{syncResult}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleSyncPremium}
+              disabled={syncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border hover:bg-muted transition-colors disabled:opacity-60"
+            >
+              <RefreshCw className={cn("w-3 h-3", syncing && "animate-spin")} />
+              {syncing ? "Syncing…" : "Sync"}
+            </button>
+            <a
+              href={GUMROAD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Upgrade
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
+      )}
+
+      {isPremium && (
+        <div className="mb-8 flex items-center gap-2 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 text-sm font-medium">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          Premium access active — all HSK levels unlocked
+        </div>
+      )}
+
       {/* Level grid */}
       <motion.div
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
       >
         {levels.map((level) => {
-          const isLocked = level.locked && !isPaid;
+          const isLocked = level.locked && !isPremium;
           return (
             <motion.div key={level.id} variants={item}>
-              {isLocked ? (
-                <div
-                  className={cn(
-                    "group relative bg-card/60 rounded-2xl p-7 text-left border border-border/40 shadow-sm overflow-hidden",
-                    "opacity-60 select-none"
+              <div
+                className={cn(
+                  "group relative rounded-2xl border bg-card p-6 transition-all duration-200",
+                  isLocked
+                    ? "opacity-70 border-border/40 cursor-default"
+                    : "border-border/60 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
+                )}
+                onClick={() => !isLocked && setLocation(`/flashcards/${level.id}`)}
+              >
+                {isLocked && (
+                  <div className="absolute top-4 right-4">
+                    <Lock className="w-4 h-4 text-muted-foreground/60" />
+                  </div>
+                )}
+                {!isLocked && level.id > 1 && (
+                  <div className="absolute top-4 right-4">
+                    <Trophy className="w-4 h-4 text-gold" />
+                  </div>
+                )}
+
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Book className="w-4 h-4 text-primary shrink-0" />
+                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                      HSK {level.id}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-serif text-foreground">{level.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {level.count.toLocaleString()} words
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={isLocked}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isLocked) setLocation(`/flashcards/${level.id}`);
+                    }}
+                    className={cn(
+                      "flex-1 py-2 rounded-xl text-sm font-medium transition-colors",
+                      isLocked
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
+                    )}
+                  >
+                    {isLocked ? "Locked" : "Study"}
+                  </button>
+                  {!isLocked && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLocation(`/quiz/${level.id}`);
+                      }}
+                      className="px-3 py-2 rounded-xl text-sm font-medium border border-border hover:bg-muted transition-colors"
+                    >
+                      Quiz
+                    </button>
                   )}
-                >
-                  <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(0,0,0,0.02)_10px,rgba(0,0,0,0.02)_11px)] rounded-2xl" />
-
-                  <div className="relative z-10 flex flex-col justify-between gap-5">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-xs text-muted-foreground/50 font-medium uppercase tracking-widest">HSK</span>
-                        <h2 className="text-5xl font-serif font-bold text-muted-foreground/60">{level.id}</h2>
-                      </div>
-                      <div className="p-2.5 bg-muted/50 rounded-xl mt-1">
-                        <Lock className="w-4 h-4 text-muted-foreground/50" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="font-bold text-muted-foreground/60">{level.title}</h3>
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-muted/80 text-muted-foreground/60 border border-border/40">
-                          Locked
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground/40">{level.count.toLocaleString()} words</p>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => setLocation(`/quiz/${level.id}`)}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/50 bg-muted/40 text-muted-foreground/70 text-sm font-medium hover:bg-muted/70 transition-colors"
-                      >
-                        <Trophy className="w-4 h-4" />
-                        Take Quiz
-                      </button>
-                      <a
-                        href={GUMROAD_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        Unlock Premium
-                      </a>
-                    </div>
-                  </div>
                 </div>
-              ) : (
-                <div className="group relative bg-card rounded-2xl p-7 text-left border border-border hover:border-primary/40 shadow-sm hover:shadow-xl hover:shadow-primary/8 transition-all duration-300 overflow-hidden">
-                  <div className="absolute -top-10 -right-10 w-28 h-28 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/15 transition-colors duration-500" />
-
-                  <div className="relative z-10 flex flex-col justify-between gap-5">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest">HSK</span>
-                        <h2 className="text-5xl font-serif font-bold text-foreground">{level.id}</h2>
-                      </div>
-                      <div className="p-2.5 bg-muted rounded-xl mt-1 group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-300">
-                        <Book className="w-5 h-5" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="font-bold text-foreground">{level.title}</h3>
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
-                          Available
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{level.count.toLocaleString()} words</p>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => setLocation(`/quiz/${level.id}`)}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border bg-muted/50 text-foreground text-sm font-semibold hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors"
-                      >
-                        <Trophy className="w-4 h-4" />
-                        Take Quiz
-                      </button>
-                      <button
-                        onClick={() => setLocation(`/flashcards/${level.id}`)}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-md shadow-primary/20 hover:-translate-y-0.5 hover:shadow-lg transition-all"
-                      >
-                        <Book className="w-4 h-4" />
-                        Study Flashcards
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              </div>
             </motion.div>
           );
         })}

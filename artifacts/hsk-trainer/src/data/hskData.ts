@@ -185,54 +185,7 @@ export const hskData: VocabWord[] = [
   { id: "hsk1-d9",  hskLevel: 1, category: "Daily Life", word: "也",     pinyin: "yě",         meaning: "Also / Too",      imageAlt: "Two arrows pointing the same direction side by side",    imageUrl: "https://images.unsplash.com/photo-1511174511562-130d49fef403?w=400&q=80" },
   { id: "hsk1-d10", hskLevel: 1, category: "Daily Life", word: "都",     pinyin: "dōu",        meaning: "All / Both",      imageAlt: "Circle of hands joined together representing everyone",  imageUrl: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&q=80" },
   { id: "hsk1-d11", hskLevel: 1, category: "Daily Life", word: "没有",   pinyin: "méi yǒu",    meaning: "Don't have / No", imageAlt: "Empty open box or empty hands showing nothing inside",   imageUrl: "https://images.unsplash.com/photo-1557683311-eac922347aa1?w=400&q=80" },
-
-  // ─── HSK 2 ─────────────────────────────────────────────────────────────────
-  { id: "hsk2-1", hskLevel: 2, word: "医院",  pinyin: "yīyuàn",   meaning: "Hospital",    imageAlt: "Hospital building exterior with emergency entrance",       imageUrl: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=400&q=80" },
-  { id: "hsk2-2", hskLevel: 2, word: "学校",  pinyin: "xuéxiào",  meaning: "School",      imageAlt: "School building with students on the grounds",            imageUrl: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&q=80" },
-  { id: "hsk2-3", hskLevel: 2, word: "公司",  pinyin: "gōngsī",   meaning: "Company",     imageAlt: "Modern office building exterior with glass facade",        imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80" },
-  { id: "hsk2-4", hskLevel: 2, word: "银行",  pinyin: "yínháng",  meaning: "Bank",        imageAlt: "Bank building exterior with columns and signage",         imageUrl: "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=400&q=80" },
-  { id: "hsk2-5", hskLevel: 2, word: "电话",  pinyin: "diànhuà",  meaning: "Telephone",   imageAlt: "Classic telephone handset or smartphone on a surface",    imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80" },
-  { id: "hsk2-6", hskLevel: 2, word: "颜色",  pinyin: "yánsè",    meaning: "Color",       imageAlt: "Paint swatches in a full spectrum of colors",             imageUrl: "https://images.unsplash.com/photo-1532960401447-7dd05bef20b0?w=400&q=80" },
-  { id: "hsk2-7", hskLevel: 2, word: "天气",  pinyin: "tiānqì",   meaning: "Weather",     imageAlt: "Dramatic sky showing changing weather conditions",         imageUrl: "https://images.unsplash.com/photo-1504608524841-42584120d848?w=400&q=80" },
-  { id: "hsk2-8", hskLevel: 2, word: "地图",  pinyin: "dìtú",     meaning: "Map",         imageAlt: "Folded paper map laid out on a flat surface",             imageUrl: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400&q=80" },
-
-  // ─── HSK 3 ─────────────────────────────────────────────────────────────────
-  { id: "hsk3-1", hskLevel: 3, word: "环境", pinyin: "huánjìng", meaning: "Environment",   imageAlt: "Lush natural forest environment with sunlight through trees", imageUrl: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80" },
-  { id: "hsk3-2", hskLevel: 3, word: "文化", pinyin: "wénhuà",   meaning: "Culture",       imageAlt: "Traditional cultural artifacts and architecture",          imageUrl: "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400&q=80" },
-  { id: "hsk3-3", hskLevel: 3, word: "经济", pinyin: "jīngjì",   meaning: "Economy",       imageAlt: "Stock market graph showing economic trends",              imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80" },
-  { id: "hsk3-4", hskLevel: 3, word: "机会", pinyin: "jīhuì",    meaning: "Opportunity",   imageAlt: "Open door with light streaming through symbolising chance", imageUrl: "https://images.unsplash.com/photo-1459257831348-f0cdd359235f?w=400&q=80" },
-  { id: "hsk3-5", hskLevel: 3, word: "音乐", pinyin: "yīnyuè",   meaning: "Music",         imageAlt: "Musical notes and instruments representing music",         imageUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&q=80" },
-  { id: "hsk3-6", hskLevel: 3, word: "健康", pinyin: "jiànkāng", meaning: "Health",        imageAlt: "Person exercising outdoors showing a healthy lifestyle",   imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80" },
-  { id: "hsk3-7", hskLevel: 3, word: "友谊", pinyin: "yǒuyì",    meaning: "Friendship",    imageAlt: "Two friends with arms around each other laughing",         imageUrl: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80" },
-  { id: "hsk3-8", hskLevel: 3, word: "旅游", pinyin: "lǚyóu",    meaning: "Travel/Tourism",imageAlt: "Tourist with luggage at an iconic landmark destination",   imageUrl: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=80" },
-
-  // ─── HSK 4 ─────────────────────────────────────────────────────────────────
-  { id: "hsk4-1", hskLevel: 4, word: "责任", pinyin: "zérèn",    meaning: "Responsibility",imageAlt: "Person carrying a heavy load symbolising responsibility",  imageUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=80" },
-  { id: "hsk4-2", hskLevel: 4, word: "效率", pinyin: "xiàolǜ",   meaning: "Efficiency",    imageAlt: "Organised clean workspace showing efficient productivity", imageUrl: "https://images.unsplash.com/photo-1506784365847-bbad939e9335?w=400&q=80" },
-  { id: "hsk4-3", hskLevel: 4, word: "传统", pinyin: "chuántǒng",meaning: "Tradition",     imageAlt: "Traditional ceremony or cultural ritual being performed",  imageUrl: "https://images.unsplash.com/photo-1516733968668-dbdce39c4651?w=400&q=80" },
-  { id: "hsk4-4", hskLevel: 4, word: "创新", pinyin: "chuàngxīn",meaning: "Innovation",    imageAlt: "Futuristic technology representing innovation and progress", imageUrl: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&q=80" },
-  { id: "hsk4-5", hskLevel: 4, word: "政策", pinyin: "zhèngcè",  meaning: "Policy",        imageAlt: "Government building or formal document representing policy", imageUrl: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&q=80" },
-  { id: "hsk4-6", hskLevel: 4, word: "艺术", pinyin: "yìshù",    meaning: "Art",           imageAlt: "Colorful painting on a canvas in an art gallery",          imageUrl: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&q=80" },
-  { id: "hsk4-7", hskLevel: 4, word: "科学", pinyin: "kēxué",    meaning: "Science",       imageAlt: "Scientist in lab with microscope and test tubes",          imageUrl: "https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=400&q=80" },
-  { id: "hsk4-8", hskLevel: 4, word: "情感", pinyin: "qínggǎn",  meaning: "Emotion/Feeling",imageAlt: "Person expressing deep emotion with visible feeling",     imageUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&q=80" },
-
-  // ─── HSK 5 ─────────────────────────────────────────────────────────────────
-  { id: "hsk5-1", hskLevel: 5, word: "辩证", pinyin: "biànzhèng",meaning: "Dialectical",       imageAlt: "Two contrasting scales in balance — pros and cons",     imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80" },
-  { id: "hsk5-2", hskLevel: 5, word: "哲学", pinyin: "zhéxué",   meaning: "Philosophy",        imageAlt: "Ancient Greek sculpture of a thinking philosopher",     imageUrl: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&q=80" },
-  { id: "hsk5-3", hskLevel: 5, word: "矛盾", pinyin: "máodùn",   meaning: "Contradiction",     imageAlt: "Two arrows pointing in opposite directions, in conflict", imageUrl: "https://images.unsplash.com/photo-1530099486328-e021101a494a?w=400&q=80" },
-  { id: "hsk5-4", hskLevel: 5, word: "策略", pinyin: "cèlüè",    meaning: "Strategy",          imageAlt: "Chess board with pieces arranged in a strategic position", imageUrl: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=400&q=80" },
-  { id: "hsk5-5", hskLevel: 5, word: "竞争", pinyin: "jìngzhēng",meaning: "Competition",       imageAlt: "Athletes racing each other at a sports track competition", imageUrl: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&q=80" },
-  { id: "hsk5-6", hskLevel: 5, word: "意识", pinyin: "yìshí",    meaning: "Consciousness",     imageAlt: "Human brain diagram or person in a state of awareness",  imageUrl: "https://images.unsplash.com/photo-1564866657315-df64f3e1e62e?w=400&q=80" },
-  { id: "hsk5-7", hskLevel: 5, word: "探索", pinyin: "tànsuǒ",   meaning: "Exploration",       imageAlt: "Explorer with map in a vast unknown wilderness",         imageUrl: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=400&q=80" },
-  { id: "hsk5-8", hskLevel: 5, word: "融合", pinyin: "rónghé",   meaning: "Integration/Fusion",imageAlt: "Two liquids or colours blending and merging together",   imageUrl: "https://images.unsplash.com/photo-1543674892-7d64d45df18b?w=400&q=80" },
-
-  // ─── HSK 6 ─────────────────────────────────────────────────────────────────
-  { id: "hsk6-1", hskLevel: 6, word: "批判",   pinyin: "pīpàn",     meaning: "Critique/Criticism", imageAlt: "Red pen marking corrections on a written document",     imageUrl: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&q=80" },
-  { id: "hsk6-2", hskLevel: 6, word: "抽象",   pinyin: "chōuxiàng", meaning: "Abstract",           imageAlt: "Abstract colorful geometric shapes on a canvas",        imageUrl: "https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=400&q=80" },
-  { id: "hsk6-3", hskLevel: 6, word: "逻辑",   pinyin: "luójí",     meaning: "Logic",              imageAlt: "Mathematical formula or flowchart diagram on a board",  imageUrl: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&q=80" },
-  { id: "hsk6-4", hskLevel: 6, word: "文明",   pinyin: "wénmíng",   meaning: "Civilization",       imageAlt: "Ancient ruins or historical monuments of a civilisation", imageUrl: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400&q=80" },
-  { id: "hsk6-5", hskLevel: 6, word: "影响",   pinyin: "yǐngxiǎng", meaning: "Influence/Impact",   imageAlt: "Ripple effect in still water from a single drop",       imageUrl: "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=400&q=80" },
-  { id: "hsk6-6", hskLevel: 6, word: "价值观", pinyin: "jiàzhíguān",meaning: "Values",             imageAlt: "Compass pointing true north symbolising guiding values", imageUrl: "https://images.unsplash.com/photo-1509475826633-fed943a7b719?w=400&q=80" },
-  { id: "hsk6-7", hskLevel: 6, word: "可持续", pinyin: "kěchíxù",   meaning: "Sustainable",        imageAlt: "Green energy wind turbines in a sustainable landscape",  imageUrl: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=400&q=80" },
-  { id: "hsk6-8", hskLevel: 6, word: "全球化", pinyin: "quánqiúhuà",meaning: "Globalization",      imageAlt: "Globe with network connections showing global links",    imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80" },
 ];
+
+// HSK 2-6 words are served securely from the authenticated API.
+// Use: GET /api/lessons?level=N  (auth + premium required for levels 2-6)
