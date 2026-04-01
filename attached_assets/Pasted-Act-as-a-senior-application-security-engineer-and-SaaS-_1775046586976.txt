@@ -1,0 +1,197 @@
+Act as a senior application security engineer and SaaS pre-launch auditor.
+
+I am deploying a mini SaaS called HSK Trainer.
+Business model:
+- HSK1 is free
+- HSK2+ is premium subscription
+- Users may create accounts, log in, study vocabulary, take quizzes, save progress, and manage billing
+- The app will be publicly accessible on the internet
+
+Your job:
+Perform a thorough pre-deployment security review of my app and infrastructure.
+Be concrete, technical, and strict.
+Assume this is a real production launch, not a demo.
+
+I want the output in 7 sections:
+
+1. Threat model
+2. Critical vulnerabilities to check first
+3. Secure architecture review
+4. Code-level audit checklist
+5. Infrastructure and deployment checklist
+6. Payment/auth/data privacy checklist
+7. A final go/no-go launch verdict with blockers
+
+Important instructions:
+- Prioritize real-world risks for a small public SaaS
+- Focus on the highest-likelihood and highest-impact issues first
+- Do not give generic advice only; explain exactly what to inspect
+- For every issue, include:
+  - risk level: critical / high / medium / low
+  - what could go wrong
+  - how to verify it
+  - how to fix it
+- Flag anything that could lead to account takeover, payment abuse, data leaks, broken authorization, or admin compromise
+- Be opinionated
+- If something is missing, say what assumption you are making
+- At the end, give me a punch-list of must-fix items before launch
+
+Audit scope:
+
+A. Authentication and accounts
+Check:
+- secure password hashing using a modern password hashing algorithm, not plain hashes or reversible encryption
+- secure session handling
+- secure cookie flags: HttpOnly, Secure, SameSite
+- no session fixation
+- logout invalidates sessions correctly
+- email verification flow
+- password reset tokens are strong, single-use, and expire quickly
+- brute-force protection on login, signup, reset, and magic-link endpoints
+- rate limiting and abuse prevention
+- no user enumeration through login, signup, or reset error messages
+- MFA readiness for admin accounts
+- admin accounts separated from normal user accounts where possible
+
+B. Authorization
+Check:
+- users can only access their own progress, quiz results, billing state, profile, and study history
+- no IDOR/BOLA issues on API routes, database queries, URLs, or client-side requests
+- premium content is enforced server-side, not just hidden in frontend code
+- free users cannot unlock HSK2+ via modified requests, local storage, hidden params, or direct API calls
+- admin endpoints are protected and not discoverable or exposed accidentally
+- role checks exist on every sensitive backend route
+
+C. Input handling and common web vulns
+Check for:
+- XSS, especially anywhere user-generated content, profile data, notes, quiz answers, or query params are rendered
+- injection risks: SQL, NoSQL, ORM injection, command injection
+- CSRF on state-changing actions if cookie-based auth is used
+- unsafe file upload handling if uploads exist
+- open redirects
+- SSRF if any URL fetch/import feature exists
+- template injection
+- insecure deserialization
+- path traversal
+- prototype pollution if relevant to the stack
+- unsafe use of eval, innerHTML, dangerouslySetInnerHTML, or equivalent
+
+D. Frontend/browser security
+Check:
+- strong Content Security Policy
+- security headers including at least HSTS, X-Content-Type-Options, and frame protections where appropriate
+- no secrets exposed in frontend bundles
+- no privileged logic enforced only in JavaScript
+- localStorage/sessionStorage not used for sensitive long-lived secrets unless justified
+- third-party scripts minimized and trusted
+- analytics/chat widgets do not expose sensitive data
+
+E. Payments and subscriptions
+Assume Stripe unless I tell you otherwise.
+Check:
+- I do not handle raw card data directly if using Stripe-hosted flows
+- webhook signatures are verified correctly
+- webhook events are idempotent
+- subscription state is updated from trusted server-side events, not client redirects alone
+- premium access is revoked correctly on failed/canceled subscriptions
+- no price tampering from the client
+- product/price IDs are validated server-side
+- test and live keys are separated
+- secrets are not committed to git or exposed in logs
+- refunds/cancellations/customer portal flows are safe
+
+F. API and backend security
+Check:
+- all APIs require proper authentication and authorization
+- rate limiting exists on sensitive endpoints
+- request validation exists on every input
+- verbose error messages do not leak stack traces, SQL errors, secrets, or internal paths
+- logs do not store passwords, tokens, card info, reset links, or sensitive PII
+- CORS is locked down
+- server-side secrets come only from environment/secret manager
+- background jobs and cron tasks are authenticated and protected
+- webhook endpoints are isolated and validated
+
+G. Data protection and privacy
+Check:
+- minimal data collection
+- sensitive data encrypted or otherwise protected at rest where appropriate
+- backups are protected
+- retention/deletion policy exists
+- users can delete accounts or request deletion if required
+- email addresses and learning progress are not publicly exposed
+- privacy policy / terms / refund policy gaps that create operational risk
+
+H. Infrastructure and deployment
+Check:
+- HTTPS only
+- production environment variables configured safely
+- least-privilege database credentials
+- production database not publicly exposed
+- staging/dev services not publicly accessible or reusing prod secrets
+- secure CI/CD
+- dependency and package audit
+- lockfile present
+- outdated/vulnerable packages flagged
+- container hardening if Docker is used
+- cloud storage bucket permissions checked
+- domain, DNS, and email security basics checked
+- monitoring/alerting/logging configured for auth spikes, 500s, payment failures, and suspicious activity
+
+I. Secrets management
+Check:
+- no API keys, tokens, private keys, or webhook secrets in repo history
+- secret rotation plan exists
+- separate secrets for dev/staging/prod
+- principle of least privilege for all API keys
+- no secrets in frontend env variables unless explicitly public-safe
+
+J. Abuse and business logic
+Check:
+- signup abuse and bot creation
+- coupon abuse if coupons exist
+- trial abuse using multiple accounts
+- scraping of premium content
+- quiz or progress endpoints being spammed
+- email abuse from invite/reset/contact forms
+- account sharing scenarios
+- mass-download of vocabulary content
+- bypass of premium gating through race conditions or stale cache
+
+K. Observability and incident readiness
+Check:
+- audit logs for admin and billing actions
+- alerts for repeated failed logins, unusual signup spikes, and webhook failures
+- basic incident response plan
+- rollback plan
+- backup restore sanity check
+- health checks for critical services
+
+Now here is my stack and app design:
+[PASTE YOUR STACK HERE]
+
+Examples:
+- frontend:
+- backend:
+- database:
+- auth provider:
+- billing provider:
+- hosting:
+- object storage:
+- email provider:
+- analytics:
+- admin panel:
+- any AI features:
+- any user-generated content:
+- any upload features:
+
+Here are my relevant files/code/configs:
+[PASTE FILES, ROUTES, ENV EXAMPLES, MIDDLEWARE, BILLING CODE, AUTH CODE, DEPLOYMENT CONFIG, ETC.]
+
+After the audit:
+1. Give me the top 10 issues ranked by launch risk
+2. Give me exact code/config changes I should make first
+3. Give me a final verdict:
+   - SAFE TO LAUNCH
+   - LAUNCH AFTER FIXING HIGH-RISK ISSUES
+   - DO NOT LAUNCH
