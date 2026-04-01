@@ -1,0 +1,334 @@
+Act as a senior full-stack engineer and pragmatic security engineer.
+
+I am building a mini SaaS called HSK Trainer on Replit.
+I want you to help me turn it into the easiest secure production-ready version possible, with minimal complexity and the fastest path to launch.
+
+IMPORTANT OPERATING MODE
+- Be practical, not academic
+- Prefer the simplest working architecture
+- Keep Replit + React + Supabase Auth + Supabase Postgres + Gumroad + lightweight backend/API routes
+- Do not overengineer
+- Do not suggest unnecessary paid services
+- Optimize for the fastest safe path to launch
+- When setup requires values, keys, product IDs, webhook URLs, redirect URLs, SQL policies, or dashboard configuration, STOP and explicitly ask me for exactly what you need
+- Ask for all APIs, secrets, IDs, URLs, and dashboard settings needed to complete setup in the easiest way
+- Group your questions so I can answer quickly
+- After asking setup questions, produce the implementation plan and code changes
+
+PROJECT CONTEXT
+
+App name:
+HSK Trainer
+
+Current stack:
+- Frontend: React.js
+- Auth: Supabase magic link email login
+- Backend: Replit-hosted Node.js API routes
+- Database: Supabase Postgres
+- Hosting: Replit
+- Domain: custom domain connected to Replit
+- Payments: Gumroad
+- Premium model: one-time payment for lifetime access
+
+Business rules:
+- HSK1 is always free
+- HSK2–HSK6 are premium
+- One Gumroad product unlocks full premium/lifetime access
+- Premium unlock rule: verified app user email must match successful Gumroad buyer email
+- Premium content is stored in Supabase with access-level flags
+- I want server-side premium checks on every premium API
+- I want server-side route protection
+- I want middleware-based auth
+- I want basic admin access
+- I want refund/cancel handling
+- I want coupon support
+- I want basic anti-sharing limits
+- I want rate limiting, bot protection, analytics, error logging, security headers, CORS restriction, and Supabase RLS
+- No social login
+- No password login
+- No offline mode
+- Mobile-first support required
+- I want migration of existing localStorage progress if possible
+
+Current env vars:
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- GUMROAD_WEBHOOK_SECRET
+- APP_URL
+- ADMIN_EMAIL
+
+Current tables:
+- profiles
+- lessons
+- progress
+- purchases / premium_access
+
+Current API routes:
+- auth callback
+- check-premium
+- unlock-premium
+- save-progress
+- get-progress
+
+Current biggest worries:
+- premium unlock
+- payment-to-access flow
+- protecting premium content
+- reducing friction
+
+Things I want to keep unchanged:
+- React
+- Supabase auth
+- Gumroad
+- HSK1 free / HSK2–HSK6 premium
+- Replit deployment
+
+MAIN GOAL
+
+Refactor this app into a simple, secure, launchable SaaS on Replit with:
+- Supabase auth as the source of identity
+- Supabase Postgres as the source of truth
+- Gumroad webhook-driven premium activation
+- server-side authorization for premium content
+- secure progress saving/loading
+- minimal friction for the user
+- minimal operational complexity for me
+- deployment that works cleanly on Replit
+
+WHAT I NEED YOU TO DO
+
+PHASE 1 — ASK FOR EVERYTHING NEEDED
+Before coding, ask me for all missing values and setup inputs required to implement this properly.
+Ask in grouped sections, not one question at a time.
+
+Ask for the easiest-path setup inputs, including anything needed for:
+1. Replit deployment and runtime
+2. Supabase
+3. Gumroad
+4. domain + redirect URLs
+5. admin access
+6. analytics/logging
+7. DB assumptions
+8. route structure
+9. premium content schema
+10. webhook behavior
+11. refund/cancel policy
+12. anti-sharing rules
+13. coupon handling
+14. localStorage migration behavior
+
+You must explicitly ask for exact values where needed, such as:
+- Replit app URL
+- custom domain URL
+- production frontend URL
+- production backend/API URL if separate
+- whether frontend and API are served from the same Replit app
+- Replit deployment type and run command
+- Supabase project URL
+- Supabase auth redirect URLs
+- Supabase site URL
+- magic link redirect path
+- Gumroad product permalink or product identifier
+- Gumroad webhook endpoint URL to use on Replit
+- exact webhook payload fields available in my setup
+- whether Gumroad sends refund/reversal events for my product/workflow
+- admin email list or single admin email
+- allowed CORS origins
+- whether premium lessons are already in lessons table
+- whether access level is stored as level number, enum, or boolean premium flag
+- exact localStorage keys currently used for progress
+- analytics provider, if any
+- error logging provider, if any
+
+If something can be implemented in 2 ways, recommend the easiest Replit-friendly path and ask only for the values required for that path.
+
+PHASE 2 — DESIGN THE SIMPLEST SECURE REPLIT ARCHITECTURE
+After gathering inputs, design the final architecture.
+
+The architecture must use:
+- React frontend
+- Replit-hosted Node.js API routes
+- Supabase magic link auth
+- Supabase Postgres
+- Gumroad webhook
+- RLS in Supabase
+- middleware-based auth for protected routes
+- Replit environment secrets correctly
+
+Use these principles:
+- Never trust the frontend for premium access
+- Never store premium truth in localStorage
+- Never expose premium content unless authorized
+- HSK1 can be public
+- HSK2–HSK6 must be protected server-side
+- Use Supabase user identity everywhere
+- Use service role key only on trusted backend routes
+- Use anon key only on frontend
+- Make the premium unlock flow low-friction
+- Keep deployment simple on Replit
+- Ensure webhook endpoints and auth redirects work correctly on Replit and custom domain
+
+PHASE 3 — IMPLEMENTATION PLAN
+Then give me a concrete implementation plan in this format:
+
+1. Final architecture
+2. Required DB schema changes
+3. Required API route changes
+4. Required frontend changes
+5. Supabase auth setup steps
+6. Gumroad webhook setup steps
+7. Replit deployment setup steps
+8. RLS policies
+9. Middleware/auth guard design
+10. Premium unlock flow
+11. Refund/cancel flow
+12. Coupon flow
+13. Progress migration flow
+14. Env and secrets setup in Replit
+15. Security hardening
+16. Launch checklist
+
+PHASE 4 — OUTPUT CODE AND CONFIG
+Give actual implementation-ready code and config for the easiest path.
+
+Include:
+- SQL migrations
+- table definitions
+- suggested schema cleanup
+- RLS policies
+- Replit-friendly Node middleware
+- example API route handlers
+- webhook verification flow
+- premium access checks
+- React auth/session handling
+- protected route pattern
+- progress save/load functions
+- localStorage migration function
+- admin role check
+- CORS config
+- helmet/security headers setup
+- rate limiting setup
+- bot protection approach
+- analytics/error logging hooks
+- environment variable template for Replit Secrets
+- webhook idempotency approach
+- any replit.toml or deployment config changes if needed
+- advice on how to structure frontend + backend in one Replit project if that is the easiest path
+
+REQUIRED DATA MODEL
+
+Use or adapt these fields:
+
+profiles:
+- id
+- email
+- created_at
+- is_premium
+- premium_source
+- premium_granted_at
+- gumroad_email
+- role
+
+progress:
+- user_id
+- lesson_id
+- completed
+- score
+- last_seen_at
+- progress_percent
+- current_hsk_level
+
+You may normalize if needed, but keep it simple.
+
+REQUIRED SECURITY MODEL
+
+Implement these rules:
+- HSK1 lessons can be fetched publicly or by authenticated users
+- HSK2–HSK6 require authenticated user with is_premium = true
+- all premium APIs must verify auth server-side
+- all progress APIs must verify the user owns the data
+- admin routes require role=admin
+- Gumroad webhook must not blindly trust client input
+- webhook must update DB, not memory
+- premium access must persist across restarts
+- no public endpoint should reveal who is premium
+- localStorage can only be used for temporary UX state, never authorization truth
+- protect against easy abuse and repeated calls
+
+REQUIRED ROUTES / BEHAVIOR
+
+Design or update routes like these if appropriate:
+- GET /api/me
+- GET /api/lessons?level=1
+- GET /api/lessons?level=2
+- GET /api/progress
+- POST /api/progress
+- POST /api/gumroad/webhook
+- POST /api/premium/sync
+- DELETE /api/account
+
+Use the simplest clean naming you think is best.
+
+PREMIUM UNLOCK FLOW
+
+I want the simplest good UX.
+Design the best flow for this stack.
+
+Preferred behavior:
+- user signs in with magic link
+- user buys with Gumroad using same email
+- webhook marks user premium
+- app can sync premium status after purchase
+- if purchase happens before signup, make the easiest safe recommendation and implement the best matching flow
+- handle mismatch case where Gumroad email does not match app email
+- tell me the easiest path to reduce support requests
+
+ANTI-SHARING
+
+Keep this basic and low-friction.
+Recommend the easiest version only, for example:
+- session-based checks
+- simple anomaly logging
+- last active heuristics
+Do not overengineer DRM.
+
+COUPONS
+
+I only need basic support.
+Design the easiest way to support Gumroad coupon purchases while still granting premium properly.
+
+REFUNDS / CANCELLATIONS
+
+Since this is a one-time payment product:
+- explain the practical refund/revoke model
+- implement the easiest safe revoke path if Gumroad sends refund/reversal events
+- if Gumroad limitations exist, structure the system so manual revocation is easy from admin side
+
+BOT PROTECTION / RATE LIMITING
+
+Implement simple protections:
+- rate limit sensitive routes
+- recommend the easiest captcha strategy only if necessary
+- do not add friction unless justified
+- make sure the solution works well on Replit
+
+ANALYTICS / ERROR LOGGING
+
+Ask me what provider I want.
+If none exists, recommend the easiest minimal option.
+Keep it light and Replit-friendly.
+
+OUTPUT STYLE
+
+Be concrete.
+Do not give generic advice.
+When you propose something, explain why it is the easiest secure choice.
+When code/config depends on a value I must supply, insert a clear placeholder and label it.
+
+FINAL REQUIREMENT
+
+Start by asking me for all missing setup inputs in grouped sections.
+Do not skip this.
+Do not jump straight into code before collecting the required values.
+Once inputs are collected, produce the implementation plan and code.
