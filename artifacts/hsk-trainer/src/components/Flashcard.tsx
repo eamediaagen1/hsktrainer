@@ -7,10 +7,11 @@ interface FlashcardProps {
   word: VocabWord;
   isFlipped: boolean;
   onFlip: () => void;
+  showPinyin?: boolean;
   className?: string;
 }
 
-export function Flashcard({ word, isFlipped, onFlip, className }: FlashcardProps) {
+export function Flashcard({ word, isFlipped, onFlip, showPinyin = true, className }: FlashcardProps) {
   return (
     <div className={cn("perspective-1000 w-full max-w-sm aspect-[3/4] cursor-pointer", className)} onClick={onFlip}>
       <motion.div
@@ -31,7 +32,9 @@ export function Flashcard({ word, isFlipped, onFlip, className }: FlashcardProps
           
           <div className="flex-1 flex flex-col items-center justify-center space-y-4">
             <h2 className="text-7xl font-serif text-foreground">{word.word}</h2>
-            <p className="text-xl text-muted-foreground font-medium tracking-widest">{word.pinyin}</p>
+            {showPinyin && (
+              <p className="text-xl text-muted-foreground font-medium tracking-widest">{word.pinyin}</p>
+            )}
           </div>
           
           <p className="text-sm text-muted-foreground/60 font-medium">Click to reveal meaning</p>

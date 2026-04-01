@@ -31,8 +31,8 @@ export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [sent, setSent] = useState(false);           // magic link sent
-  const [needsConfirm, setNeedsConfirm] = useState(false); // signup confirmation
+  const [sent, setSent] = useState(false);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const switchMode = (next: Mode) => {
@@ -55,13 +55,13 @@ export default function LandingPage() {
         setSent(true);
       } else if (mode === "login") {
         await signInWithPassword(email, password);
-        setLocation("/levels");
+        setLocation("/dashboard");
       } else {
         const { needsConfirmation } = await signUpWithPassword(email, password);
         if (needsConfirmation) {
           setNeedsConfirm(true);
         } else {
-          setLocation("/levels");
+          setLocation("/dashboard");
         }
       }
     } catch (err: unknown) {
@@ -126,7 +126,6 @@ export default function LandingPage() {
           )}
 
           <AnimatePresence mode="wait">
-            {/* ── Magic link sent ── */}
             {sent && (
               <motion.div
                 key="sent"
@@ -153,7 +152,6 @@ export default function LandingPage() {
               </motion.div>
             )}
 
-            {/* ── Signup: email confirmation required ── */}
             {needsConfirm && (
               <motion.div
                 key="confirm"
@@ -180,7 +178,6 @@ export default function LandingPage() {
               </motion.div>
             )}
 
-            {/* ── Forms ── */}
             {!showSuccess && (
               <motion.form
                 key={mode}
@@ -191,7 +188,6 @@ export default function LandingPage() {
                 onSubmit={handleSubmit}
                 className="space-y-3"
               >
-                {/* Email field — all modes */}
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   <input
@@ -204,7 +200,6 @@ export default function LandingPage() {
                   />
                 </div>
 
-                {/* Password field — login + signup */}
                 {(mode === "login" || mode === "signup") && (
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />

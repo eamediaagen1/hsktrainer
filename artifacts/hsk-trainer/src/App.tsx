@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import MarketingPage    from "@/pages/MarketingPage";
 import LandingPage      from "@/pages/LandingPage";
 import AuthCallback     from "@/pages/AuthCallback";
+import DashboardPage    from "@/pages/DashboardPage";
 import LevelSelection   from "@/pages/LevelSelection";
 import FlashcardPage    from "@/pages/FlashcardPage";
 import ReviewPage       from "@/pages/ReviewPage";
@@ -23,15 +24,14 @@ import { AuthProvider, useAuth } from "@/contexts/auth-context";
 
 const queryClient = new QueryClient();
 
-// ─── Route guard: redirects unauthenticated users to /app ───────────────────
+// ─── Protected pages (require login) ─────────────────────────────────────────
+
 function ProtectedPages() {
   const { user, loading } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/app");
-    }
+    if (!loading && !user) navigate("/app");
   }, [user, loading, navigate]);
 
   if (loading) {
@@ -47,6 +47,7 @@ function ProtectedPages() {
   return (
     <AppShell>
       <Switch>
+        <Route path="/dashboard"         component={DashboardPage} />
         <Route path="/levels"            component={LevelSelection} />
         <Route path="/flashcards/:level" component={FlashcardPage} />
         <Route path="/quiz/:level"       component={QuizPage} />
@@ -62,15 +63,16 @@ function ProtectedPages() {
 }
 
 // ─── Top-level router ────────────────────────────────────────────────────────
+
 function Router() {
   const [location] = useLocation();
   const { user } = useAuth();
   const [, navigate] = useLocation();
 
-  // Redirect already-signed-in users away from the login page
+  // Redirect already-signed-in users away from the auth page
   useEffect(() => {
     if (location === "/app" && user) {
-      navigate("/levels");
+      navigate("/dashboard");
     }
   }, [location, user, navigate]);
 
@@ -87,12 +89,12 @@ function Router() {
     );
   }
 
-  // Admin login — standalone, no AppShell, no guard (handles its own auth)
+  // Admin login — standalone, no AppShell
   if (location.startsWith("/admin/login")) {
     return <AdminLoginPage />;
   }
 
-  // All other /admin/* routes — AdminPage handles sub-routing internally
+  // Admin panel — AdminPage handles its own sub-routing + auth
   if (location.startsWith("/admin")) {
     return <AdminPage />;
   }

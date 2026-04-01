@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Star, ChevronLeft, Volume2, Lock, Loader2 } from
 import { useQuery } from "@tanstack/react-query";
 import { hskData, type VocabWord } from "@/data/hskData";
 import { useSavedWords } from "@/hooks/use-saved-words";
+import { useStudyPrefs } from "@/hooks/use-study-prefs";
 import { apiFetch } from "@/lib/api";
 import { Flashcard } from "@/components/Flashcard";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,12 @@ export default function FlashcardPage() {
   const level = parseInt(params.level || "1");
 
   const { toggleSaveCard, isCardSaved } = useSavedWords();
+  const { prefs, set: setPref } = useStudyPrefs();
+
+  // Track the last studied level for Dashboard quick-action
+  useEffect(() => {
+    setPref("lastLevel", level);
+  }, [level, setPref]);
 
   // Level 1 words come from local data (free, no API needed)
   // Level 2-6 words are fetched from the authenticated API
@@ -65,16 +72,25 @@ export default function FlashcardPage() {
 
   const safeIndex = levelWords.length > 0 ? Math.min(currentIndex, levelWords.length - 1) : 0;
 
-  const handleSpeak = useCallback(() => {
+  const handleSpeak = useCallback((word?: string) => {
     const wordEntry = levelWords[safeIndex];
-    if (!wordEntry) return;
-    const didSpeak = speakChinese(wordEntry.word);
+    const target = word ?? wordEntry?.word;
+    if (!target) return;
+    const didSpeak = speakChinese(target);
     if (didSpeak) {
       setIsSpeaking(true);
-      const ms = 400 + wordEntry.word.length * 120 + 200;
+      const ms = 400 + target.length * 120 + 200;
       setTimeout(() => setIsSpeaking(false), ms);
     }
   }, [levelWords, safeIndex]);
+
+  // Auto-play when card changes if pref is enabled
+  useEffect(() => {
+    if (prefs.autoPlay && levelWords[safeIndex]?.word) {
+      handleSpeak(levelWords[safeIndex].word);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [safeIndex, prefs.autoPlay]);
 
   // Show loading state while fetching premium-level words
   if (level > 1 && wordsLoading) {
@@ -243,6 +259,7 @@ export default function FlashcardPage() {
               word={currentWord}
               isFlipped={isFlipped}
               onFlip={() => setIsFlipped(!isFlipped)}
+              showPinyin={prefs.showPinyin}
             />
 
             {/* Controls */}

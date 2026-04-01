@@ -9,7 +9,7 @@ import { apiFetch } from "@/lib/api";
  * Supabase redirects here after the user clicks the magic-link email.
  * The SDK automatically exchanges the URL hash tokens for a session.
  * We wait for the SIGNED_IN event, optionally migrate localStorage data,
- * then redirect to /levels.
+ * then redirect to /dashboard.
  */
 export default function AuthCallback() {
   const [, setLocation] = useLocation();
@@ -36,24 +36,23 @@ export default function AuthCallback() {
               }
             }
           } catch {
-            // Migration failure is non-fatal — user keeps studying
+            // Migration failure is non-fatal
           } finally {
-            // Always clear obsolete auth-related localStorage keys
             localStorage.removeItem("hsk_is_paid");
             localStorage.removeItem("hsk_email");
           }
 
           subscription.unsubscribe();
-          setLocation("/levels");
+          setLocation("/dashboard");
         }
       }
     );
 
     // Fallback: if already signed in when this page loads
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && !handled.current) {
+      if (session) {
         subscription.unsubscribe();
-        setLocation("/levels");
+        setLocation("/dashboard");
       }
     });
 

@@ -1,0 +1,300 @@
+You are working inside my full codebase and you have access to the whole project folder.
+
+I want you to improve the product UX/UI and app flow across the dashboard, quiz system, and settings section.
+
+IMPORTANT CONTEXT
+- This is a mini SaaS for HSK learning
+- HSK1 is free
+- HSK2+ is premium
+- Auth is Supabase
+- Payments are Gumroad
+- Admin panel already exists
+- The app currently works, but the UX is not good enough
+- I want practical product improvements, not random redesigns
+- Keep the current stack and architecture
+- Do not break premium gating
+- Do not break auth or admin
+- Keep the implementation Replit-friendly and future-transfer-friendly
+- Do not introduce unnecessary libraries
+
+MAIN GOALS
+1. Improve the main user dashboard UX/UI
+2. Stop starting users on Levels as the primary experience
+3. Create a real Dashboard page as the main logged-in home
+4. Improve the quiz system significantly
+5. Make quiz score/session behavior better
+6. Fix the settings section UX and make all settings buttons/actions actually work
+
+================================
+PART 1 — AUDIT FIRST
+================================
+
+First inspect the current implementation and explain briefly:
+- current logged-in route flow
+- current dashboard or home page situation
+- current levels page role
+- current quiz flow
+- current score behavior
+- current settings page behavior
+- broken or non-working buttons/actions
+- biggest UX/UI problems that should be fixed first
+
+Then implement the improvements directly in the codebase.
+
+================================
+PART 2 — DASHBOARD / APP FLOW
+================================
+
+I do NOT want the app to start by dumping users into Levels.
+
+Change the logged-in product flow so that:
+
+- Main logged-in landing page becomes a real Dashboard page
+- Levels becomes a secondary page accessible from navigation
+- Dashboard should feel like the home of the product
+
+Create or upgrade a Dashboard page with useful product structure.
+
+Dashboard should include:
+1. Welcome / header section
+2. Progress summary
+3. Current HSK level
+4. Study streak or recent activity if derivable
+5. Quick actions:
+   - Continue studying
+   - Review flashcards
+   - Take quiz
+   - View levels
+6. Premium status card
+7. Locked/unlocked state awareness
+8. Recent saved words or review queue if data exists
+9. Friendly empty states if the user is new
+
+The dashboard should be:
+- clean
+- modern
+- simple
+- clearly spaced
+- useful, not decorative
+- mobile-friendly
+- based on existing styling if possible
+
+Update routing so:
+- after login/signup, user goes to Dashboard instead of Levels
+- nav should make sense:
+  - Dashboard
+  - Levels
+  - Review / Quiz / Progress / Settings as appropriate
+- keep admin separate
+
+================================
+PART 3 — QUIZ SYSTEM UPGRADE
+================================
+
+The current quiz experience needs improvement.
+
+Implement all of this:
+
+1. 20-question quiz mode
+- Instead of one question, quiz sessions should include 20 questions by default
+- If there are fewer than 20 available for that level, use as many as exist
+- Questions should be selected cleanly from the level’s available word pool
+- Avoid obvious duplicates in the same session
+
+2. Score persistence during the active learning session
+- The score should persist while the user is using the app
+- If the user navigates away and comes back in the same session, the current quiz score/state should still be there if practical
+- If the user fully restarts / refreshes / intentionally starts a new quiz session, then reset the score
+- Choose the simplest good implementation, such as sessionStorage or an existing store
+- Do NOT treat this as permanent long-term progress unless the current architecture already supports that
+
+3. Better quiz UX
+- clear progress indicator:
+  - question 3 of 20
+- visible score
+- better answer feedback
+- next question flow should feel smooth
+- end-of-quiz summary screen
+- summary should include:
+  - final score
+  - correct count
+  - incorrect count
+  - percentage
+  - retry quiz
+  - back to dashboard
+  - back to levels
+- loading, empty, and error states should be polished
+
+4. Quiz state handling
+- Fix any buggy transitions
+- Make sure premium-gated quiz levels still respect server authorization
+- Make sure HSK1 remains free
+- Make sure HSK2+ still requires premium
+- If a premium fetch returns 403, show the paywall / upgrade state properly
+
+5. Quiz content quality
+- Use the existing word/question model if possible
+- If current question generation is weak, improve it with the simplest stable method
+- Keep the implementation maintainable
+
+================================
+PART 4 — SETTINGS PAGE FIX
+================================
+
+Fix the settings section UX and functionality.
+
+Requirements:
+- Audit current settings page first
+- Identify all buttons/actions that do nothing or are broken
+- Make all visible settings buttons work
+- If any setting is fake or placeholder-only, either:
+  - wire it correctly
+  - or remove/hide it until real
+- Settings should feel clean and trustworthy
+
+Suggested settings sections:
+1. Account
+- email
+- login method info if available
+- logout button
+2. Learning preferences
+- current level if relevant
+- review preferences if real
+3. Subscription / Premium
+- premium status
+- upgrade CTA if free
+4. App settings
+- theme or UI preferences only if already supported
+- otherwise do not fake options
+5. Danger zone
+- account delete only if already supported and safe
+- otherwise do not fake it
+
+Important:
+- Do not leave dead buttons
+- Do not show fake toggles that do nothing
+- Keep settings practical and minimal
+
+================================
+PART 5 — UI/UX IMPROVEMENTS
+================================
+
+Improve the overall product UX/UI consistency.
+
+Please fix:
+- weak hierarchy
+- awkward spacing
+- unclear page structure
+- low-quality empty states
+- unclear button labels
+- weak dashboard flow
+- abrupt transitions in quiz
+- settings confusion
+
+Use these principles:
+- modern SaaS dashboard feel
+- clean card layout
+- strong visual hierarchy
+- consistent spacing
+- responsive design
+- clear CTAs
+- no clutter
+- no overdesigned visuals
+- no unnecessary animation
+
+If the project already has reusable UI components, use them.
+If not, implement simple clean components without adding new libraries unless absolutely necessary.
+
+================================
+PART 6 — BUTTONS / ACTIONS
+================================
+
+Audit the app and fix all visible broken buttons/actions related to:
+- dashboard
+- levels navigation
+- quiz flow
+- settings
+- progress-related navigation
+- continue study actions
+- retry actions
+- back actions
+
+Make every visible primary action actually do something useful.
+
+If an action does not have real backend support yet:
+- either connect it to the best existing behavior
+- or hide/remove it
+- do not leave dead UI
+
+================================
+PART 7 — ROUTING / DEFAULT LANDING
+================================
+
+Adjust the app so that:
+- logged-out users see landing/auth flow
+- logged-in users go to Dashboard
+- Dashboard is the main app home
+- Levels is still accessible
+- Admin remains separate
+- unauthorized admin users are still blocked
+
+If current route guards already exist, adapt them cleanly instead of rewriting the router from scratch.
+
+================================
+PART 8 — DELIVERABLES
+================================
+
+At the end, provide:
+1. What was wrong in the current UX/UI
+2. What you changed
+3. Files changed
+4. Any routes added or updated
+5. Any state/store changes
+6. Any settings behaviors fixed
+7. Any quiz logic changes
+8. Any buttons/actions removed because they were fake or broken
+9. A short testing checklist
+
+================================
+CHECKLIST FORMAT REQUIRED
+================================
+
+Output exactly:
+
+CHECKLIST 1 — Dashboard/UI QA
+Include:
+- login redirect goes to dashboard
+- dashboard loads useful data
+- quick actions work
+- levels still accessible
+- premium status displays correctly
+- empty states look good
+- mobile layout sanity check
+
+CHECKLIST 2 — Quiz + Settings QA
+Include:
+- 20-question quiz works
+- score persists during active session
+- score resets on new/restarted session
+- summary screen works
+- premium quiz gating still works
+- settings buttons all work
+- logout works
+- any hidden/removed fake settings are noted
+
+================================
+IMPLEMENTATION STYLE
+================================
+
+- Keep this practical
+- Keep it polished
+- Do not overengineer
+- Reuse existing code
+- Preserve business rules
+- Preserve premium security
+- Prefer small focused changes
+- No unnecessary libraries
+- No fake features
+- No dead buttons
+
+START by auditing the current dashboard, quiz flow, and settings UX, then implement the improvements directly in the codebase.

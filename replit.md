@@ -42,13 +42,15 @@ workspace/
 - **HSK 2–6**: Premium, words served exclusively from `GET /api/lessons?level=N` (requires valid Supabase JWT + `is_premium = true` in DB)
 
 ### Frontend (`artifacts/hsk-trainer`)
-- **Pages**: MarketingPage, LandingPage (magic link), AuthCallback, LevelSelection, FlashcardPage, ReviewPage, QuizPage, ProgressPage, SettingsPage
+- **Pages**: MarketingPage, LandingPage (magic link), AuthCallback, DashboardPage (`/dashboard`), LevelSelection (`/levels`), FlashcardPage, ReviewPage, QuizPage, ProgressPage, SettingsPage, AdminPage / AdminLoginPage
 - **Auth context**: `src/contexts/auth-context.tsx` — `AuthProvider` + `useAuth` hook
-- **Data hooks**: `use-profile.ts`, `use-saved-words.ts` (wraps API + Supabase saved_words)
+- **Data hooks**: `use-profile.ts`, `use-saved-words.ts`, `use-study-prefs.ts`
+  - `useStudyPrefs()` → `{ prefs: { showPinyin, autoPlay, lastLevel }, set }` — persisted to `hsk_study_prefs` in localStorage
 - **API layer**: `src/lib/api.ts` — `apiFetch` with Bearer token injection + `ApiError` class
 - **Supabase client**: `src/lib/supabase.ts` — graceful no-op if secrets absent
 - **Route guard**: `ProtectedPages` in `App.tsx` (redirects to `/app` if unauthenticated)
 - **HSK data**: `src/data/hskData.ts` — HSK 1 only (188 lines); HSK 2–6 removed from frontend bundle
+- **Study prefs wired**: FlashcardPage reads `prefs.showPinyin` → toggles pinyin on card front; `prefs.autoPlay` → auto-speaks word on card advance; updates `lastLevel` pref on mount
 
 ### API Server (`artifacts/api-server`)
 - **app.ts**: helmet, CORS (restricted to `APP_URL`), rate limiter, routes at `/api`
