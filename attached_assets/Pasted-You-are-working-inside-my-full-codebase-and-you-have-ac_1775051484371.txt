@@ -1,0 +1,609 @@
+You are working inside my full codebase and you have access to the whole project folder.
+
+I am building a mini SaaS for HSK learning.
+
+Business model:
+- HSK1 is free for everyone
+- HSK2 and above are premium
+- Payments are handled through Gumroad
+- Authentication is handled with Supabase Auth
+- Frontend is React.js
+- Backend/API is Node routes in the same app
+- I am building fast, MVP-first
+- I want a secure but minimal admin panel
+- I want to keep my current app structure as much as possible unless something clearly needs improvement
+
+Important deployment context:
+- Right now the full SaaS must work fully inside Replit
+- Later I will move hosting to Vercel
+- So anything related to app URL, API URL, webhook URL, auth redirect URL, allowed origins, and runtime settings must be configurable through environment variables
+- Do not hardcode Replit-specific URLs into business logic
+- Build it so the app works now on Replit and can be transferred later with minimal changes
+
+Your job:
+Implement a minimal, secure admin/support panel for my app, using my existing stack and codebase.
+
+Main goal:
+Allow me to:
+- search users
+- verify premium status
+- inspect purchase linkage
+- manually grant or revoke premium access
+- manage key app settings safely
+- configure future API/settings values from one internal place if practical
+
+Important constraints:
+- Keep the solution simple and production-practical
+- Do not overengineer
+- Reuse existing code patterns where possible
+- Do not break the current user flow
+- Do not expose secrets to the frontend
+- Do not trust client-side checks for premium or admin access
+- Keep HSK1 free
+- Keep premium access for HSK2+
+- Keep Gumroad as payment provider
+- Keep Supabase as auth and database
+- Keep React.js frontend
+- Keep mobile usability in mind
+- Prefer one small internal admin area over a large dashboard
+
+I want you to audit the project first, then implement the admin panel in the best way based on the current code structure.
+
+================================
+PRODUCT + ACCESS RULES
+================================
+
+Access rules:
+- Free users can access HSK1 content only
+- Premium users can access HSK2+ content
+- Premium access must never rely only on frontend checks
+- Server-side premium checks should be used on premium APIs and protected premium routes where appropriate
+
+Premium unlock sources:
+- Gumroad purchase successfully linked to user
+- Manual admin grant
+- Optional future source types can exist, but build around these two now
+
+Likely support cases I need to handle:
+- User paid on Gumroad but premium did not unlock
+- User bought with one email and logged in with another
+- User got refunded and should lose premium
+- I need to manually grant premium to a verified buyer
+- I need to manually revoke premium
+- I need to verify whether webhook data was received
+- I need to verify whether a purchase row exists and whether it is linked to a user
+
+================================
+STACK DECISIONS
+================================
+
+Use these defaults unless the codebase strongly suggests a better equivalent:
+- Frontend: React.js
+- Auth: Supabase Auth
+- Auth login mode: magic link preferred
+- Database: Supabase Postgres
+- Hosting: current Replit project setup
+- Admin UI: simple internal React pages/components
+- Security: server-side admin checks + Supabase RLS + protected routes
+- Admin roles: only "user" and "admin"
+- Only my account should be admin by default
+
+================================
+WHAT I WANT YOU TO BUILD
+================================
+
+Build a minimal admin/support panel with the smallest useful scope.
+
+Core admin/support features:
+1. Search user by email
+2. View user profile data
+3. View premium status
+4. View Gumroad-linked purchase info if available
+5. Manually grant premium
+6. Manually revoke premium
+7. Log every admin action
+8. Optionally attach or store Gumroad buyer email on a user if needed
+9. View current runtime/app settings values that are safe to display
+10. Manage non-secret app settings if a simple settings table is practical
+
+Preferred MVP routes:
+- /admin
+- /admin/users
+
+Optional routes only if useful and easy:
+- /admin/purchases
+- /admin/logs
+- /admin/settings
+
+Smallest acceptable MVP:
+- One admin page or two simple admin pages
+- Search input
+- User detail card
+- Buttons for Grant Premium and Revoke Premium
+- Admin log section
+- Simple settings section if practical
+
+================================
+ADMIN SETTINGS SCOPE
+================================
+
+I also want the admin panel to help me manage app/API-related settings in the easiest safe way.
+
+Important:
+- Do NOT expose secrets in the frontend
+- Secrets must remain in Replit environment variables only
+- If a value is sensitive, show only whether it is configured, not the raw value
+
+Implement the safest practical version of settings support:
+1. Display whether required secrets/env vars are configured:
+   - SUPABASE_URL
+   - SUPABASE_ANON_KEY
+   - SUPABASE_SERVICE_ROLE_KEY
+   - VITE_SUPABASE_URL
+   - VITE_SUPABASE_ANON_KEY
+   - GUMROAD_WEBHOOK_SECRET
+   - GUMROAD_PRODUCT_PERMALINK
+   - APP_URL
+   - VITE_GUMROAD_URL
+2. Show a config health section:
+   - missing required env vars
+   - current app mode
+   - whether admin user is detected
+   - whether Supabase connection works
+   - whether Gumroad settings look complete
+3. If practical, add a non-secret app_settings table for runtime-managed values such as:
+   - support_email
+   - marketing_banner_enabled
+   - maintenance_message
+   - premium_cta_text
+   - gumroad_checkout_url override
+4. Secrets must never be editable from the frontend
+5. Non-secret settings can be editable only by admin through secure server endpoints if easy to implement
+
+If a settings table is too much for MVP, at minimum create a read-only Admin Config Status panel showing:
+- configured / missing
+- last updated if derivable
+- warnings for risky misconfiguration
+
+================================
+FIRST TASK: AUDIT THE CODEBASE
+================================
+
+Before implementing, inspect the existing project and determine:
+1. Current routing structure
+2. Current auth flow
+3. Current Supabase setup
+4. Current DB schema or migrations
+5. Existing user/profile tables
+6. Existing premium logic
+7. Existing API routes / server functions
+8. Existing lesson/content models
+9. Existing progress storage
+10. Whether there is already admin-like functionality
+11. Whether content access is currently enforced only on the client
+12. Whether current middleware/auth guards already exist
+13. How env vars are currently read
+14. Whether current architecture is easy to move later from Replit to Vercel
+
+Then adapt implementation to the existing codebase.
+
+Do not rewrite everything if small additions are enough.
+
+================================
+DATABASE / TABLES TO ADD OR ADAPT
+================================
+
+If these tables already exist, adapt them carefully.
+If they do not exist, add them.
+
+1. profiles
+This should represent app-level user state.
+
+Suggested fields:
+- id uuid primary key references auth.users(id)
+- email text unique
+- role text default 'user'
+- is_premium boolean default false
+- premium_source text nullable
+- premium_granted_at timestamptz nullable
+- gumroad_email text nullable
+- created_at timestamptz default now()
+- updated_at timestamptz default now()
+
+2. purchases
+Track Gumroad purchase linkage and status.
+
+Suggested fields:
+- id uuid primary key default gen_random_uuid()
+- user_id uuid nullable references profiles(id)
+- buyer_email text
+- provider text default 'gumroad'
+- product_name text nullable
+- product_id text nullable
+- sale_id text unique nullable
+- status text default 'paid'
+- refund_status text default 'none'
+- purchased_at timestamptz nullable
+- raw_payload jsonb nullable
+- created_at timestamptz default now()
+
+3. admin_logs
+Track all manual admin actions.
+
+Suggested fields:
+- id uuid primary key default gen_random_uuid()
+- admin_user_id uuid references profiles(id)
+- target_user_id uuid references profiles(id)
+- action text
+- reason text nullable
+- meta jsonb nullable
+- created_at timestamptz default now()
+
+4. app_settings (optional but preferred if simple)
+Only for non-secret runtime settings.
+
+Suggested fields:
+- key text primary key
+- value jsonb not null
+- description text nullable
+- updated_at timestamptz default now()
+- updated_by uuid nullable references profiles(id)
+
+Examples:
+- support_email
+- premium_cta_text
+- maintenance_message
+- gumroad_checkout_url_override
+
+5. progress
+Only if needed and not already present.
+Use existing progress model if present.
+
+Important:
+- Prefer migrations over ad hoc manual changes
+- Preserve existing data
+- Avoid destructive changes
+- If existing tables differ, integrate with them instead of duplicating blindly
+
+================================
+ADMIN ROLE RULES
+================================
+
+Role model:
+- user
+- admin
+
+Requirements:
+- Admin panel must only be accessible to admin users
+- Do not rely only on client-side route hiding
+- Every admin API route must verify the current user is authenticated and has role='admin'
+- Add a safe way to seed my email as admin if needed
+- Do not expose service role keys in frontend code
+- Provide the exact SQL or server-safe procedure to promote my account to admin
+
+================================
+RLS / SECURITY
+================================
+
+I want safe defaults.
+
+Implement or improve:
+1. Row-level security for user-owned tables
+2. Normal users can only read/update their own profile and own progress
+3. Admin actions should go through secure server-side endpoints, not open client writes
+4. Premium flags must not be writable by normal users directly
+5. Admin routes must be server-checked
+6. Add security headers if the project has a place for them
+7. Restrict CORS if applicable in the current architecture
+8. Add rate limiting for sensitive auth/admin routes if practical
+9. Never store service secrets in client-side code
+10. Never return raw env secrets to admin UI
+11. Only return config status booleans or masked safe values
+
+If RLS already exists, review and improve instead of replacing without reason.
+
+================================
+ADMIN API / SERVER FUNCTIONS
+================================
+
+Add secure admin endpoints or server functions that match the project style.
+
+Minimum needed:
+1. Get user by email
+2. Get user details with profile + purchases + progress summary
+3. Grant premium
+4. Revoke premium
+5. Get admin logs
+6. Get config health/status
+7. Optionally link purchase to user
+8. Optionally update non-secret app settings
+
+Suggested logical operations:
+
+GET user by email:
+- input: email
+- output: profile, premium info, linked purchases, basic progress summary
+
+POST grant premium:
+- input: userId, reason
+- effect:
+  - set is_premium=true
+  - set premium_source='admin_manual' or similar
+  - set premium_granted_at=now()
+  - write admin_logs row
+
+POST revoke premium:
+- input: userId, reason
+- effect:
+  - set is_premium=false
+  - update source/status if needed
+  - write admin_logs row
+
+GET config status:
+- output:
+  - required env vars configured yes/no
+  - missing required non-secret runtime config
+  - warnings
+
+Optional POST link purchase:
+- input: userId, purchaseId, reason
+- effect:
+  - attach purchase to user
+  - optionally sync gumroad email
+  - write log
+
+Optional POST setting update:
+- input: key, value
+- effect:
+  - validate allowlisted keys only
+  - update app_settings
+  - write admin_logs row
+
+Important:
+- Follow current backend conventions already used in the repo
+- Return clean typed responses if TypeScript is used
+- Add proper error handling
+- Validate inputs
+- Reject non-admin callers
+
+================================
+ADMIN UI
+================================
+
+Build a minimal but usable internal admin UI in React.
+
+Preferred structure:
+- admin layout
+- admin guard
+- users page with search
+- selected user details panel
+- action buttons
+- config status/settings panel
+- log list
+
+Suggested UI sections on the user detail view:
+1. Profile card
+- email
+- user id
+- role
+- created at
+- last login if available
+
+2. Premium card
+- premium yes/no
+- premium source
+- premium granted at
+- gumroad email
+
+3. Purchases card
+- provider
+- product name
+- purchase date
+- paid/refunded state
+- sale id if available
+
+4. Progress card
+- current HSK level if derivable
+- lessons completed
+- last activity
+
+5. Actions card
+- Grant Premium
+- Revoke Premium
+- Optional: Link Purchase
+- Reason input or dropdown
+
+6. Audit log section
+- recent admin actions for this user
+
+7. Config health card
+- APP_URL configured yes/no
+- Supabase keys configured yes/no
+- Gumroad fields configured yes/no
+- warnings
+- optional non-secret settings editor
+
+UI requirements:
+- Keep it simple
+- Responsive enough for laptop use
+- Do not spend time on fancy design
+- Use existing UI components/styles if present
+- If no UI system exists, use minimal clean styling
+
+================================
+ROUTING / GUARDS
+================================
+
+Add admin route protection.
+
+Requirements:
+- Non-authenticated users cannot access admin routes
+- Authenticated non-admin users cannot access admin routes
+- Redirect unauthorized users away
+- Do both frontend guard and backend verification
+
+If middleware-based auth already exists, integrate with it.
+If not, add the lightest clean solution appropriate for the current stack.
+
+================================
+PREMIUM ACCESS ENFORCEMENT
+================================
+
+Review the current premium logic.
+
+I want you to make sure:
+- HSK1 stays free
+- HSK2+ is premium
+- Premium access is enforced safely
+- Frontend-only hiding is not the only protection
+- Premium APIs check premium server-side if such APIs exist
+- Lesson/content access logic is clean and maintainable
+
+If content currently lacks an access flag, introduce a practical model such as:
+- access_level: 'free' | 'premium'
+or
+- min_hsk_level / requires_premium
+
+Adapt to the codebase instead of forcing a bad abstraction.
+
+================================
+GUMROAD INTEGRATION SUPPORT
+================================
+
+I am using Gumroad as payment provider.
+
+I need the admin panel to support real-world Gumroad mismatch cases.
+
+Please support this logic:
+- Purchase may exist with buyer email different from app login email
+- Admin should still be able to verify and manually grant premium
+- Purchase rows should support storing Gumroad buyer email
+- Purchase rows should support storing raw webhook payload or metadata if useful
+- Refund state should be trackable
+
+If a webhook system already exists:
+- inspect it
+- improve it carefully
+- do not break it
+
+If there is no webhook system:
+- create the minimum structure needed for future Gumroad syncing, but do not overbuild unless clearly necessary
+
+================================
+AUDIT LOGGING
+================================
+
+Every manual admin action must be logged.
+
+At minimum log:
+- admin user id
+- target user id
+- action
+- reason
+- timestamp
+- optional meta JSON
+
+Actions to log:
+- grant_premium
+- revoke_premium
+- link_purchase
+- mark_refund
+- update_setting
+- any other manual override you add
+
+================================
+DELIVERABLES I WANT FROM YOU
+================================
+
+Please do all of the following:
+
+1. Audit the current codebase and explain what already exists
+2. Propose the minimal implementation plan based on the current project
+3. Implement the changes
+4. Add or adapt DB migrations/schema
+5. Add secure admin endpoints / server handlers
+6. Add admin UI pages/components
+7. Add route/admin protection
+8. Add or improve RLS if needed
+9. Wire the admin panel into the current auth/session system
+10. Make sure the build still works
+11. Summarize exactly what you changed
+12. List any environment variables I need to set
+13. List any manual post-deploy steps I must do
+14. Tell me how to promote my account to admin
+15. Tell me which parts are MVP and which parts can wait
+16. Add a final checklist I can follow in Replit step by step
+17. Add a later-transfer checklist for moving from Replit to Vercel
+
+================================
+CHECKLIST FORMAT REQUIREMENT
+================================
+
+At the end, output exactly these two checklists:
+
+CHECKLIST 1 — Do Now in Replit
+Include:
+- migrations to run
+- env vars/secrets to set
+- files/routes added
+- how to sign in and promote admin
+- how to test admin search
+- how to test grant/revoke premium
+- how to verify logs
+- how to verify config status
+- how to verify premium still works for users
+
+CHECKLIST 2 — Later Transfer to Vercel
+Include:
+- which env vars to update
+- APP_URL changes
+- Supabase site URL / redirect URL changes
+- Gumroad webhook URL changes
+- CORS/origin changes
+- what should require zero code changes if done correctly
+- final smoke tests after moving
+
+================================
+IMPLEMENTATION STYLE RULES
+================================
+
+- Prefer minimal clean code
+- Prefer small focused files over giant files
+- Reuse existing helpers/utilities where possible
+- Do not introduce unnecessary libraries
+- Do not break current user flow
+- Keep naming consistent with the project
+- Add comments only where useful
+- Use existing TypeScript setup if the project uses TS
+- If the project uses JS, stay with JS unless there is a strong reason not to
+- If something is unclear in the codebase, choose the safest practical approach
+- Make best engineering decisions without asking me lots of questions
+- Keep the admin panel private and support-oriented, not a giant dashboard
+
+================================
+IF YOU NEED A DEFAULT MVP SCOPE
+================================
+
+If you need to choose the smallest acceptable version, build this:
+
+Routes:
+- /admin
+- /admin/users
+
+Features:
+- search user by email
+- show profile
+- show premium status
+- show Gumroad email if present
+- show purchases if present
+- show two buttons:
+  - Grant Premium
+  - Revoke Premium
+- require reason for manual changes
+- store action in admin_logs
+- show config health
+- protect page and endpoints for admin only
+
+That is the priority.
+
+Now start by auditing the current project structure and then implement the best version of this plan directly in the codebase.

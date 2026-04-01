@@ -16,6 +16,7 @@ import PhrasesPage    from "@/pages/PhrasesPage";
 import StrokesPage    from "@/pages/StrokesPage";
 import ProgressPage   from "@/pages/ProgressPage";
 import SettingsPage   from "@/pages/SettingsPage";
+import AdminPage      from "@/pages/AdminPage";
 import { AppShell }   from "@/components/AppShell";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 
@@ -83,6 +84,11 @@ function Router() {
         <Route path="/auth/callback" component={AuthCallback} />
       </Switch>
     );
+  }
+
+  // Admin uses its own layout — no AppShell sidebar
+  if (location.startsWith("/admin")) {
+    return <AdminPage />;
   }
 
   return <ProtectedPages />;

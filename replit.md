@@ -84,12 +84,36 @@ workspace/
 | `APP_URL` | API server | Allowed CORS origin (e.g. `https://yourapp.replit.app`) |
 | `VITE_GUMROAD_URL` | Frontend | Gumroad checkout link shown to users |
 
+## Admin Panel
+
+Accessible at `/admin` — requires `role = 'admin'` in the `profiles` table. Has its own layout (no sidebar). All actions are server-verified.
+
+### Features
+- **Users tab**: search by email; view profile, premium status, linked purchases, progress summary; grant/revoke premium with optional reason (all logged); link unlinked Gumroad purchases to a user
+- **Config tab**: environment health check (boolean only — no secret values exposed); editable `app_settings` table for non-secret runtime values
+
+### Admin API Routes (all protected by `requireAuth + requireAdmin`)
+- `GET /api/admin/users` — list all users
+- `GET /api/admin/user?email=` — full user detail (profile + purchases + progress + logs)
+- `POST /api/admin/grant-premium` — grant premium, logs action
+- `POST /api/admin/revoke-premium` — revoke premium, logs action
+- `POST /api/admin/link-purchase` — link unlinked purchase to user, logs action
+- `GET /api/admin/logs` — list admin logs (optional `?user_id=` filter)
+- `GET /api/admin/config` — env health check (true/false only per var, no raw values)
+- `GET /api/admin/settings` — list app_settings
+- `POST /api/admin/settings` — update allowlisted app_setting key (logged)
+
+### Admin Audit Log (`admin_logs` table)
+Every grant, revoke, link, and setting change writes a row with admin user ID, target user ID, action name, optional reason, and metadata JSON.
+
 ## Setup Checklist
 
 1. Run `migrations/001_supabase_schema.sql` in Supabase SQL editor
-2. Set all secrets listed above in Replit Secrets
-3. After first sign-in, promote yourself to admin: `UPDATE profiles SET role = 'admin' WHERE email = 'YOUR_EMAIL';`
-4. Configure Gumroad webhook URL: `https://<APP_URL>/api/gumroad/webhook?secret=<GUMROAD_WEBHOOK_SECRET>`
+2. Run `migrations/002_admin_tables.sql` in Supabase SQL editor (adds `admin_logs`, `app_settings`, `updated_at` on profiles)
+3. Set all secrets listed above in Replit Secrets
+4. After first sign-in, promote yourself to admin: `UPDATE profiles SET role = 'admin' WHERE email = 'YOUR_EMAIL';`
+5. Configure Gumroad webhook URL: `https://<APP_URL>/api/gumroad/webhook?secret=<GUMROAD_WEBHOOK_SECRET>`
+6. Access admin panel at `<APP_URL>/admin`
 
 ## TypeScript & Composite Projects
 
