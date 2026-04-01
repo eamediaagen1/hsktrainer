@@ -1,0 +1,174 @@
+Update the existing Supabase authentication system to support BOTH:
+
+1. Magic link login (already implemented)
+2. Email + password signup and login (new)
+
+IMPORTANT CONTEXT:
+- The project already has Supabase connected
+- migrations/001 and 002 are already applied
+- profiles table already exists
+- admin panel already exists
+- Do NOT break anything that already works
+- Keep everything compatible with current Replit deployment
+- Keep future Vercel migration in mind (no hardcoded URLs)
+
+--------------------------------
+GOAL
+--------------------------------
+
+Add password-based authentication while keeping magic link working.
+
+--------------------------------
+WHAT TO IMPLEMENT
+--------------------------------
+
+1. FRONTEND AUTH UI
+
+Update the existing auth page (do NOT create unnecessary pages):
+
+- Add mode toggle:
+  - "Magic Link"
+  - "Password Login"
+  - "Sign Up"
+
+Forms:
+
+Login (password):
+- email
+- password
+- button: "Login"
+
+Signup:
+- email
+- password
+- button: "Create Account"
+
+Magic link:
+- keep existing flow
+
+--------------------------------
+2. SUPABASE AUTH METHODS
+
+Use:
+
+- supabase.auth.signInWithPassword()
+- supabase.auth.signUp()
+- keep supabase.auth.signInWithOtp()
+
+--------------------------------
+3. ERROR HANDLING
+
+- Show real Supabase errors in UI
+- Replace generic "Something went wrong"
+- Handle:
+  - invalid login
+  - email already exists
+  - weak password
+  - unconfirmed email
+
+--------------------------------
+4. SESSION HANDLING
+
+- Keep existing session logic
+- Ensure:
+  - login sets session
+  - signup sets session (if allowed)
+  - auth state updates correctly
+  - logout still works
+
+--------------------------------
+5. DATABASE SAFETY
+
+VERY IMPORTANT:
+
+- profiles table already exists
+- There may already be a trigger for auth.users → profiles
+
+Do NOT blindly recreate triggers.
+
+Instead:
+
+- Check if a trigger/function exists for inserting into profiles
+- If it exists → reuse it
+- If it does NOT exist → create it safely
+
+--------------------------------
+6. ADD SAFE SQL MIGRATION
+
+If needed, create a NEW migration file:
+
+migrations/003_password_auth_support.sql
+
+Only include missing pieces.
+
+Use SAFE statements:
+
+- CREATE OR REPLACE FUNCTION
+- CREATE INDEX IF NOT EXISTS
+- ALTER TABLE ... ADD COLUMN IF NOT EXISTS
+
+SQL should ensure:
+
+- profiles row is created on signup
+- no duplicate inserts
+- works for both:
+  - magic link
+  - password signup
+
+--------------------------------
+7. SUPABASE SETTINGS CHECK
+
+Add a checklist in output telling me:
+
+- I must enable Email + Password in Supabase dashboard
+- where to click exactly
+
+--------------------------------
+8. VALIDATION CHECKS
+
+After implementation, verify:
+
+- VITE_SUPABASE_URL is used
+- VITE_SUPABASE_ANON_KEY is used
+- no secret key in frontend
+- auth client initializes correctly
+
+--------------------------------
+9. DO NOT BREAK
+
+- admin panel
+- premium logic
+- existing API routes
+- existing auth callback (/auth/callback)
+
+--------------------------------
+10. OUTPUT REQUIRED
+
+At the end, provide:
+
+1. Files changed
+2. New migration (if created)
+3. Supabase dashboard steps
+4. Test checklist:
+
+   - signup works
+   - login works
+   - magic link still works
+   - profile row created
+   - admin promotion works
+   - premium still enforced
+
+--------------------------------
+IMPLEMENTATION STYLE
+
+- Minimal changes
+- Reuse existing code
+- Keep UI simple
+- Do not introduce new libraries
+- Keep code clean and readable
+
+--------------------------------
+START BY:
+
+1. Auditing current auth implementation
+2. Then implement the changes cleanly

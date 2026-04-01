@@ -13,6 +13,8 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string) => Promise<void>;
+  signInWithPassword: (email: string, password: string) => Promise<void>;
+  signUpWithPassword: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -43,8 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  /** Magic link (OTP) — sends email, no password needed */
   const signIn = async (email: string) => {
-    // Build the redirect URL dynamically so it works on any domain
     const base = window.location.origin +
       (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
     const redirectTo = `${base}/auth/callback`;
@@ -57,12 +59,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
+  /** Password login */
+  const signInWithPassword = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  };
+
+  /**
+   * Password signup.
+   * Returns { needsConfirmation: true } when Supabase requires email confirmation
+   * before the session is active (depends on your project settings).
+   */
+  const signUpWithPassword = async (email: string, password: string) => {
+    const base = window.location.origin +
+      (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+    const redirectTo = `${base}/auth/callback`;
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: redirectTo },
+    });
+
+    if (error) throw error;
+
+    // If session is null after signup, Supabase requires email confirmation
+    const needsConfirmation = !data.session;
+    return { needsConfirmation };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{ user, session, loading, signIn, signInWithPassword, signUpWithPassword, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );
