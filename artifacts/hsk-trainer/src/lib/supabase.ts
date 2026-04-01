@@ -8,6 +8,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
     "[supabase] VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are not set. " +
       "Add them as Replit Secrets to enable authentication."
   );
+} else if (import.meta.env.DEV) {
+  console.log("[supabase] Initialized with URL:", supabaseUrl);
 }
 
 export const supabase = createClient(
