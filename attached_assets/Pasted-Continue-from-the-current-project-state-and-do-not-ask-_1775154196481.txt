@@ -1,0 +1,127 @@
+Continue from the current project state and do not ask me for Supabase values or existing app data unless something is truly missing.
+
+You already have access to the full codebase and project context.
+
+I want you to add the missing migration and backend/admin wiring so premium access can be granted automatically from the admin side.
+
+GOAL
+- Add any missing database migration(s)
+- Ensure all required profile/admin fields exist
+- Ensure admin can grant premium automatically
+- Ensure admin can revoke premium automatically
+- Ensure the admin panel has all required fields to manage premium access cleanly
+- Reuse existing code and tables where possible
+- Do not break current auth, demo flow, or existing routes
+
+WHAT TO IMPLEMENT
+
+1. Audit existing schema first
+Check whether these already exist in the current database model:
+- profiles table
+- email field
+- role field
+- is_premium field
+- premium_source field
+- premium_granted_at field
+- gumroad_email field
+- updated_at field
+- admin_logs or equivalent audit table
+
+If any are missing, add a proper migration.
+Do not duplicate correct existing structures.
+
+2. Add migration(s) as needed
+The final schema should support:
+- app-level user profile
+- admin role
+- premium access flag
+- premium source tracking
+- premium granted timestamp
+- optional Gumroad email storage
+- audit logs for admin actions
+
+Preferred profile fields:
+- id
+- email
+- role
+- is_premium
+- premium_source
+- premium_granted_at
+- gumroad_email
+- created_at
+- updated_at
+
+Preferred admin log fields:
+- id
+- admin_user_id
+- target_user_id
+- action
+- reason
+- meta
+- created_at
+
+3. Automatic admin premium control
+Make sure the admin workflow can automatically do all of this:
+- search user by email
+- grant premium by email
+- revoke premium by email
+- update profile fields correctly
+- write audit logs
+- return clear success/error responses
+
+If grant-premium-by-email already exists, extend it only if needed.
+If revoke-premium-by-email does not exist, add it.
+
+4. Admin panel fields
+Make sure the admin panel can show all useful premium-related fields automatically for a searched user:
+- email
+- user id
+- role
+- is_premium
+- premium_source
+- premium_granted_at
+- gumroad_email
+- created_at
+- updated_at
+- recent audit log entries if available
+
+If the current admin UI does not show all of these, update it.
+
+5. Security
+Verify and enforce:
+- only admins can use grant/revoke premium endpoints
+- only admins can access admin management UI
+- no client-side direct writes to premium flags
+- no secrets exposed to frontend
+- use current secure backend patterns in the repo
+
+6. Auto profile support
+If the project does not already ensure every auth user has a profile row, add the minimum safe support needed so premium-by-email always works reliably.
+
+7. Keep existing behavior intact
+Do not break:
+- demo flow
+- auth flow
+- sidebar changes
+- phrase page fix
+- existing premium checks unless improvement is needed
+
+DELIVERABLES
+At the end, give me:
+1. audit summary
+2. schema changes made
+3. migration files added
+4. files changed
+5. endpoints added/updated
+6. admin UI fields added
+7. how automatic admin premium grant now works
+8. how revoke now works
+9. any manual post-deploy step left, if any
+
+IMPLEMENTATION STYLE
+- Minimal and practical
+- No overengineering
+- Reuse existing code
+- Keep naming consistent
+- Prefer adapting over rebuilding
+- Preserve existing data

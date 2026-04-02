@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, ChevronRight, Lock } from "lucide-react";
+import { Search, ChevronRight, Lock, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 import { apiFetch } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
@@ -339,6 +339,137 @@ function UserListItem({
   );
 }
 
+// ── Quick grant / revoke by email ────────────────────────────────────────────
+
+function QuickEmailAction() {
+  const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
+  const verified = isAdminVerified();
+
+  const [email, setEmail] = useState("");
+  const [reason, setReason] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const grantMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<{ success: boolean; email: string }>("/api/admin/grant-premium-by-email", {
+        method: "POST",
+        body: JSON.stringify({ email: email.trim(), reason: reason.trim() }),
+      }),
+    onSuccess: (data) => {
+      toast({ title: "Premium granted", description: `${data.email} now has premium access.` });
+      setEmail("");
+      setReason("");
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (err) =>
+      toast({
+        title: "Grant failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      }),
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<{ success: boolean; email: string }>("/api/admin/revoke-premium-by-email", {
+        method: "POST",
+        body: JSON.stringify({ email: email.trim(), reason: reason.trim() }),
+      }),
+    onSuccess: (data) => {
+      toast({ title: "Premium revoked", description: `${data.email} no longer has premium.` });
+      setEmail("");
+      setReason("");
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (err) =>
+      toast({
+        title: "Revoke failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      }),
+  });
+
+  const isPending = grantMutation.isPending || revokeMutation.isPending;
+  const canSubmit = email.trim().length > 0 && reason.trim().length > 0 && !isPending;
+
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Zap className="w-4 h-4 text-primary" />
+          <span className="text-sm font-semibold text-foreground">Quick Action by Email</span>
+          <span className="text-xs text-muted-foreground">grant or revoke without searching</span>
+        </div>
+        <span className="text-xs text-muted-foreground">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-border px-4 py-4 space-y-3">
+          {!verified ? (
+            <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Verify your identity first to use quick actions.</span>
+              <button
+                onClick={() => navigate("/admin/login?next=/admin/users")}
+                className="font-semibold underline"
+              >
+                Verify →
+              </button>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">
+                  User email <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">
+                  Reason <span className="text-destructive">*</span> (logged to audit trail)
+                </label>
+                <input
+                  type="text"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="e.g. verified Gumroad buyer"
+                  className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => grantMutation.mutate()}
+                  disabled={!canSubmit}
+                  className="flex-1 text-sm font-semibold py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {grantMutation.isPending ? "Granting…" : "Grant Premium"}
+                </button>
+                <button
+                  onClick={() => revokeMutation.mutate()}
+                  disabled={!canSubmit}
+                  className="flex-1 text-sm font-semibold py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {revokeMutation.isPending ? "Revoking…" : "Revoke Premium"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── UsersTab ──────────────────────────────────────────────────────────────────
 
 export default function UsersTab() {
@@ -370,7 +501,11 @@ export default function UsersTab() {
   const showDetail = selectedUserId !== null;
 
   return (
-    <div className={`grid gap-4 ${showDetail ? "lg:grid-cols-[1fr_1fr]" : ""}`}>
+    <div className="space-y-4">
+      {/* Quick action panel */}
+      <QuickEmailAction />
+
+      <div className={`grid gap-4 ${showDetail ? "lg:grid-cols-[1fr_1fr]" : ""}`}>
       {/* Left: search + list */}
       <div className="space-y-3">
         {/* Search */}
@@ -425,6 +560,7 @@ export default function UsersTab() {
           />
         </div>
       )}
+      </div>
     </div>
   );
 }

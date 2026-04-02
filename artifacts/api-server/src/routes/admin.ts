@@ -317,6 +317,153 @@ router.post("/admin/revoke-premium", async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /api/admin/grant-premium-by-email
+// Body: { email, reason }
+// Looks up profile by email, auto-creates profile stub if missing, then grants.
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/admin/grant-premium-by-email", async (req, res) => {
+  const { email, reason } = req.body as { email?: string; reason?: string };
+
+  if (!email?.trim()) {
+    res.status(400).json({ error: "email is required" });
+    return;
+  }
+  if (!reason?.trim()) {
+    res.status(400).json({ error: "reason is required for grant_premium" });
+    return;
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Try to find existing profile
+  let { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, email, is_premium")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+
+  if (profileError) {
+    res.status(500).json({ error: "DB error fetching profile" });
+    return;
+  }
+
+  // If no profile, check auth.users and auto-create the profile row
+  if (!profile) {
+    const { data: authList } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+    const authUser = authList?.users?.find(
+      (u) => u.email?.toLowerCase() === normalizedEmail
+    );
+
+    if (!authUser) {
+      res.status(404).json({
+        error: `No account found for ${normalizedEmail}. The user must sign in at least once before premium can be granted.`,
+      });
+      return;
+    }
+
+    // Auto-create the missing profile row
+    const { data: created, error: createError } = await supabaseAdmin
+      .from("profiles")
+      .insert({ id: authUser.id, email: normalizedEmail })
+      .select("id, email, is_premium")
+      .single();
+
+    if (createError || !created) {
+      res.status(500).json({ error: "Failed to create profile for user" });
+      return;
+    }
+
+    profile = created;
+  }
+
+  const now = new Date().toISOString();
+  const { error: updateError } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      is_premium: true,
+      premium_source: "admin",
+      premium_granted_at: now,
+      updated_at: now,
+    })
+    .eq("id", profile.id);
+
+  if (updateError) {
+    res.status(500).json({ error: "Failed to grant premium" });
+    return;
+  }
+
+  await writeLog(req.user!.id, profile.id, "grant_premium", reason, {
+    granted_at: now,
+    by_email: normalizedEmail,
+  });
+
+  res.json({ success: true, user_id: profile.id, email: profile.email });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/admin/revoke-premium-by-email
+// Body: { email, reason }
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/admin/revoke-premium-by-email", async (req, res) => {
+  const { email, reason } = req.body as { email?: string; reason?: string };
+
+  if (!email?.trim()) {
+    res.status(400).json({ error: "email is required" });
+    return;
+  }
+  if (!reason?.trim()) {
+    res.status(400).json({ error: "reason is required for revoke_premium" });
+    return;
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, email, is_premium")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+
+  if (profileError) {
+    res.status(500).json({ error: "DB error fetching profile" });
+    return;
+  }
+
+  if (!profile) {
+    res.status(404).json({ error: `No profile found for ${normalizedEmail}` });
+    return;
+  }
+
+  if (!profile.is_premium) {
+    res.status(400).json({ error: `${normalizedEmail} does not currently have premium` });
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const { error: updateError } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      is_premium: false,
+      premium_source: null,
+      premium_granted_at: null,
+      updated_at: now,
+    })
+    .eq("id", profile.id);
+
+  if (updateError) {
+    res.status(500).json({ error: "Failed to revoke premium" });
+    return;
+  }
+
+  await writeLog(req.user!.id, profile.id, "revoke_premium", reason, {
+    revoked_at: now,
+    by_email: normalizedEmail,
+  });
+
+  res.json({ success: true, user_id: profile.id, email: profile.email });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/admin/link-purchase
 // Body: { user_id, purchase_id, reason? }
 // ─────────────────────────────────────────────────────────────────────────────
