@@ -8,15 +8,21 @@ import { generalLimiter } from "./middleware/rate-limit.js";
 
 const app: Express = express();
 
+// ── Trust proxy (Replit / reverse-proxy environments) ────────────────────────
+// Required so express-rate-limit can read X-Forwarded-For correctly.
+app.set("trust proxy", 1);
+
 // ── Allowed origins ─────────────────────────────────────────────────────────
-// APP_URL is the primary frontend origin. For local dev, also allow localhost.
-// Add multiple origins as a comma-separated list: APP_URL=https://a.com,https://b.com
+// APP_URL is the primary frontend origin. For local dev, also allow localhost
+// and any *.replit.dev / *.riker.replit.dev origin automatically.
 const rawOrigins = process.env.APP_URL ?? "";
 const ALLOWED_ORIGINS: string[] = [
   ...rawOrigins.split(",").map((s) => s.trim()).filter(Boolean),
   "http://localhost:5173",
   "http://localhost:3000",
 ];
+
+const isDev = process.env.NODE_ENV !== "production";
 
 // ── Security headers ─────────────────────────────────────────────────────────
 app.use(
@@ -33,6 +39,11 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (server-to-server, curl, etc.)
       if (!origin) {
+        callback(null, true);
+        return;
+      }
+      // In development, allow all *.replit.dev and *.riker.replit.dev origins
+      if (isDev && (origin.endsWith(".replit.dev") || origin.endsWith(".replit.app"))) {
         callback(null, true);
         return;
       }
