@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { runMigration006IfNeeded, MIGRATION_006_SQL_EXPORT } from "../lib/migrate.js";
 
 const router = Router();
 
@@ -642,6 +643,33 @@ router.post("/admin/settings", async (req, res) => {
 
   await writeLog(req.user!.id, null, "update_setting", reason, { key, value });
   res.json({ success: true });
+});
+
+// POST /api/admin/run-migration-006 — idempotent: creates level_progress table if missing
+router.post("/admin/run-migration-006", async (req, res) => {
+  const result = await runMigration006IfNeeded().catch((err: unknown) => ({
+    ran: false,
+    note: String(err),
+  }));
+
+  if (result.ran) {
+    res.json({ success: true, message: result.note });
+    return;
+  }
+
+  // Table already exists or auto-migration succeeded via pg/query
+  if (result.note.includes("already exists") || result.note.includes("applied")) {
+    res.json({ success: true, message: result.note });
+    return;
+  }
+
+  // Auto-migration failed — return the SQL for manual execution
+  res.status(500).json({
+    success: false,
+    message: result.note,
+    manual_sql: MIGRATION_006_SQL_EXPORT.trim(),
+    instructions: "Run the manual_sql above in Supabase Dashboard → SQL Editor",
+  });
 });
 
 export default router;

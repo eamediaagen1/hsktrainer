@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { runMigration006IfNeeded } from "./lib/migrate.js";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +23,9 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Best-effort: create level_progress table if migration 006 hasn't been run yet
+  runMigration006IfNeeded().catch((e) => {
+    logger.error({ err: e }, "Migration check failed");
+  });
 });

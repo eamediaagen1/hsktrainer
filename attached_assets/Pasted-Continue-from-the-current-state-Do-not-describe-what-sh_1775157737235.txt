@@ -1,0 +1,127 @@
+Continue from the current state. Do not describe what should happen in theory — fix the actual bug in the codebase.
+
+Current bug:
+The level progression works when finishing the quiz/exam flow, but when I return to the main Levels overview page, HSK2 is still shown as locked.
+So the unlock state is not being persisted/read correctly on the main levels page.
+
+I need you to fix this properly.
+
+================================
+PART 1 — FIX LEVEL UNLOCK PERSISTENCE
+================================
+
+Problem:
+- Passing HSK1 exam unlocks HSK2 only inside the quiz/exam flow
+- But on the main Levels page, HSK2 still appears locked
+- This means the Levels page is not reading the saved progress/unlock state correctly, or the exam pass is not being persisted correctly
+
+Please:
+1. Audit the full flow end to end:
+   - exam completion write
+   - DB persistence
+   - progress fetch on Levels page
+   - unlock calculation logic
+2. Fix the real cause
+3. Make the Levels page always reflect the saved progression state correctly after refresh/navigation
+
+Expected behavior:
+- User passes HSK1 exam
+- DB saves HSK1 as passed/completed
+- HSK2 becomes unlocked
+- When user returns to /levels, HSK2 must show as unlocked
+- This must persist after page reload and new session
+
+If a migration exists for level progress but the app is not using it correctly, wire it correctly.
+If the app still uses temporary/local state for unlocks, replace that with DB-backed user progress.
+
+================================
+PART 2 — LEVELS PAGE MUST USE REAL USER PROGRESS
+================================
+
+The Levels overview page must derive each card state from the authenticated user's saved progress.
+
+For each level card, compute state from DB-backed progress:
+- passed
+- unlocked
+- current
+- locked
+
+Do not rely on quiz-page-only state.
+Do not rely on temporary client state.
+Do not rely only on localStorage unless it is being synced intentionally.
+
+Make sure the page loads the current user's progression state on mount and updates correctly after exam completion.
+
+================================
+PART 3 — REDIRECTION FIX
+================================
+
+Also fix login redirection.
+
+Requirements:
+- If client is NOT signed in and tries to access protected routes, redirect to login gate
+- If client IS already signed in and lands on login/auth page, redirect them to dashboard
+- Do not leave signed-in users stuck on auth page
+- Keep route behavior consistent across refresh
+
+Expected behavior:
+- signed out user -> protected route -> login
+- signed in user -> login page -> dashboard
+- signed in user -> levels/dashboard -> normal access
+
+================================
+PART 4 — SECURITY FIXES
+================================
+
+Audit and fix related security issues in this flow.
+
+Please verify:
+1. Protected routes are actually protected
+2. Levels/progress data is fetched only for the authenticated user
+3. One user cannot read or modify another user's progress
+4. Level unlock cannot be faked purely from frontend state
+5. Exam completion writes are validated server-side where applicable
+6. Premium checks still work correctly
+7. No insecure direct writes to premium or admin fields from client
+
+If RLS/policies or API checks need adjustment, fix them carefully.
+
+================================
+PART 5 — UX CONSISTENCY
+================================
+
+After the persistence bug is fixed, make sure the Levels page shows consistent UX:
+
+- Passed level:
+  - Passed badge
+  - Review button
+  - Continue to next level button if next level exists
+
+- Newly unlocked level:
+  - Unlocked / Ready badge
+  - Start button active
+
+- Locked level:
+  - Locked state
+  - Correct unlock reason
+
+The key thing:
+The card states on /levels must match the real saved progression, not just the quiz result screen.
+
+================================
+PART 6 — WHAT I WANT BACK
+================================
+
+At the end, tell me:
+1. root cause of the bug
+2. what you changed
+3. files changed
+4. whether DB persistence was fixed
+5. whether Levels page now reads real user progress
+6. what you changed for redirection
+7. what security issues were fixed
+8. any migration or manual step still required
+
+Important:
+Do not just restyle cards again.
+Fix the persistence + levels overview logic + redirection + security properly.

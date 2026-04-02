@@ -21,7 +21,10 @@ export function useLevelProgress() {
     queryKey: ["level-progress", user?.id],
     queryFn: () => apiFetch<LevelProgressEntry[]>("/api/progress/levels"),
     enabled: !!user,
-    staleTime: 60_000,
+    // Always fetch fresh data — progression changes must be visible immediately
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const progressMap: LevelProgressMap = {};
@@ -39,7 +42,11 @@ export function useLevelProgress() {
         }
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["level-progress"] });
+      // Use the exact query key (with user.id) so invalidation is precise
+      qc.invalidateQueries({ queryKey: ["level-progress", user?.id] });
+    },
+    onError: (err) => {
+      console.error("[useLevelProgress] exam submit failed:", err);
     },
   });
 
