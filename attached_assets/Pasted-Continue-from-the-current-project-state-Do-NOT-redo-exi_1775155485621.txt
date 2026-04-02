@@ -1,0 +1,245 @@
+Continue from the current project state. Do NOT redo existing working features.
+
+I want to improve UX, progress tracking, navigation structure, and level progression logic.
+
+Keep everything simple, consistent with the current codebase, and do not break existing flows.
+
+==================================================
+PART 1 — PROGRESS PER USER (CRITICAL)
+==================================================
+
+Fix and ensure that progress is saved per authenticated user (client).
+
+Requirements:
+- Progress must be tied to user_id (Supabase auth user)
+- Each user must have independent progress
+- No shared progress between users
+- Progress must persist across sessions and devices
+
+Check:
+- current progress storage (DB or localStorage)
+- if localStorage is used, migrate to database (or sync it)
+- ensure all progress APIs use user_id
+
+Progress to track:
+- completed lessons
+- completed categories
+- quiz/test results
+- exam completion (important for level unlock)
+
+If needed:
+- create/update a progress table
+- ensure RLS allows users to access only their own progress
+
+==================================================
+PART 2 — AUTO LOGOUT AFTER INACTIVITY (10 MIN)
+==================================================
+
+Implement inactivity-based auto logout.
+
+Requirements:
+- logout user after 10 minutes of inactivity
+- inactivity = no mouse, keyboard, or interaction
+- reset timer on activity
+- works on all pages
+
+UX:
+- optional warning at ~9 minutes:
+  "You will be logged out soon due to inactivity"
+- or silent logout (acceptable for MVP)
+
+Implementation:
+- frontend timer + event listeners
+- call Supabase logout when triggered
+- clear timers properly
+
+==================================================
+PART 3 — SIDEBAR / NAVIGATION CLEANUP
+==================================================
+
+Update navigation structure:
+
+1. Remove:
+- Quiz from main sidebar
+- Phrases from main sidebar
+
+2. Move:
+- Phrases INSIDE levels
+
+New structure:
+
+- Dashboard
+- Demo (if free user)
+- Levels
+  - HSK1
+    - Flashcards
+    - Phrases
+    - Pass HSK1 Exam
+  - HSK2
+  - HSK3
+  - ...
+- Settings
+
+Rules:
+- quizzes should exist inside categories or levels only
+- no standalone "Quiz" page in sidebar
+- navigation should feel hierarchical and clean
+
+==================================================
+PART 4 — LEVEL PROGRESSION SYSTEM
+==================================================
+
+Add level progression logic based on exam completion.
+
+Goal:
+- user must pass HSK1 exam to unlock HSK2
+- then pass HSK2 exam to unlock HSK3, etc.
+
+IMPORTANT:
+- this progression is separate from premium
+- premium unlocks access to content
+- progression unlocks next level based on completion
+
+==================================================
+PART 5 — HSK1 COMPLETION UX
+==================================================
+
+When user completes HSK1 exam:
+
+1. Save:
+- mark HSK1 as completed in DB
+
+2. Show UI:
+- "Passed" badge on HSK1
+- clear success feedback
+
+3. Unlock:
+- allow access to HSK2
+
+4. Update dashboard / levels:
+- HSK1 → completed
+- HSK2 → unlocked
+
+==================================================
+PART 6 — LEVEL LOCKING LOGIC
+==================================================
+
+Rules:
+
+If user is premium:
+- can access HSK1 immediately
+- HSK2 locked until HSK1 passed
+- HSK3 locked until HSK2 passed
+- and so on
+
+If user is NOT premium:
+- only demo available
+- no full level access
+
+So:
+- premium = access permission
+- progression = unlock next level
+
+==================================================
+PART 7 — DATABASE / PROGRESS FIELDS
+==================================================
+
+Ensure DB supports level progression.
+
+Add fields if needed:
+
+Option A (in progress table):
+- user_id
+- level (hsk1, hsk2, etc.)
+- exam_passed boolean
+- exam_score
+- completed_at
+
+Option B (separate table):
+- level_progress
+
+Fields:
+- user_id
+- level
+- is_unlocked
+- is_completed
+- completed_at
+
+Use whichever fits current schema best.
+
+==================================================
+PART 8 — UI IMPROVEMENTS
+==================================================
+
+Add UX improvements:
+
+1. Level cards:
+- show:
+  - Locked 🔒
+  - Unlocked
+  - Passed ✓
+
+2. When locked:
+- show message:
+  "Complete previous level to unlock"
+
+3. When passed:
+- show badge:
+  "Passed"
+
+4. Clear CTA:
+- "Start HSK1"
+- "Continue HSK2"
+- etc.
+
+==================================================
+PART 9 — EXAM RESULT HANDLING
+==================================================
+
+When user finishes exam:
+
+- calculate result
+- decide pass/fail
+- if pass:
+  - mark level completed
+  - unlock next level
+  - show success screen
+- if fail:
+  - show retry option
+
+==================================================
+PART 10 — SECURITY + CONSISTENCY
+==================================================
+
+Ensure:
+- level unlock cannot be faked from frontend
+- server/API validates completion if needed
+- premium checks still enforced
+- no exposure of locked content
+
+==================================================
+PART 11 — DELIVERABLES
+==================================================
+
+At the end, provide:
+
+1. What was changed
+2. Files updated
+3. Routes updated
+4. DB changes (if any)
+5. How progress is stored now
+6. How inactivity logout works
+7. How level unlock logic works
+8. How HSK1 completion triggers HSK2 unlock
+9. Any manual steps required
+
+==================================================
+IMPLEMENTATION RULES
+==================================================
+
+- Keep it simple
+- Do not overengineer
+- Reuse existing structures
+- Do not break current working features
+- Prefer small clean changes
+- Maintain mobile usability

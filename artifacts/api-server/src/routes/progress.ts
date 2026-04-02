@@ -120,6 +120,68 @@ router.patch("/progress/:wordId", requireAuth, requirePremium, async (req, res) 
   res.json({ success: true, next_review: nextReview, interval_days: newInterval });
 });
 
+// GET /api/progress/levels — get level progression (exam results) for current user
+router.get("/progress/levels", requireAuth, async (req, res) => {
+  const { data, error } = await supabaseAdmin
+    .from("level_progress")
+    .select("level, exam_passed, exam_score, completed_at")
+    .eq("user_id", req.user!.id)
+    .order("level", { ascending: true });
+
+  if (error) {
+    res.status(500).json({ error: "Failed to fetch level progress" });
+    return;
+  }
+
+  res.json(data ?? []);
+});
+
+// POST /api/progress/exam — record a quiz/exam result and unlock next level
+// Body: { level: 1-6, correct: number, total: number }
+router.post("/progress/exam", requireAuth, requirePremium, async (req, res) => {
+  const { level, correct, total } = req.body as {
+    level?: number;
+    correct?: number;
+    total?: number;
+  };
+
+  if (!level || level < 1 || level > 6) {
+    res.status(400).json({ error: "level must be 1–6" });
+    return;
+  }
+  if (typeof correct !== "number" || typeof total !== "number" || total <= 0) {
+    res.status(400).json({ error: "correct and total are required numbers" });
+    return;
+  }
+
+  const scorePct = Math.round((correct / total) * 100);
+  const passed = scorePct >= 70;
+  const now = new Date().toISOString();
+
+  const { error } = await supabaseAdmin
+    .from("level_progress")
+    .upsert(
+      {
+        user_id: req.user!.id,
+        level,
+        exam_passed: passed,
+        exam_score: scorePct,
+        completed_at: passed ? now : null,
+        updated_at: now,
+      },
+      { onConflict: "user_id,level", ignoreDuplicates: false }
+    );
+
+  if (error) {
+    res.status(500).json({ error: "Failed to save exam result" });
+    return;
+  }
+
+  const nextLevelUnlocked = passed && level < 6;
+
+  res.json({ success: true, passed, score_pct: scorePct, next_level_unlocked: nextLevelUnlocked });
+});
+
 // POST /api/progress/migrate — migrate localStorage saved cards on first sign-in
 router.post("/progress/migrate", requireAuth, async (req, res) => {
   const { saved_cards } = req.body as {

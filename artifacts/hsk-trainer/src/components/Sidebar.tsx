@@ -3,9 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   BookOpen,
-  MessageSquare,
   PenLine,
-  Brain,
   Star,
   BarChart3,
   Settings,
@@ -46,14 +44,12 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Dashboard",       icon: LayoutDashboard, href: "/dashboard" },
       { label: "Levels",          icon: BookOpen,        href: "/levels" },
-      { label: "Phrases",         icon: MessageSquare,   href: "/phrases",  badge: "NEW" },
-      { label: "Stroke Learning", icon: PenLine,         href: "/strokes",  badge: "NEW" },
+      { label: "Stroke Learning", icon: PenLine,         href: "/strokes", badge: "NEW" },
     ],
   },
   {
     title: "Practice",
     items: [
-      { label: "Quiz",            icon: Brain,           href: "/quiz/1" },
       { label: "Review Mode",     icon: Star,            href: "/review" },
     ],
   },
@@ -442,7 +438,6 @@ export function Sidebar() {
     if (href === "/dashboard") return location === "/dashboard";
     if (href === "/levels") return location === "/levels";
     if (href === "/flashcards/1") return location.startsWith("/flashcards");
-    if (href === "/quiz/1") return location.startsWith("/quiz");
     return location === href;
   };
 

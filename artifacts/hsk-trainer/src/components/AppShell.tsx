@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DecorativeBackground } from "@/components/Decorations";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
+import { useInactivityLogout } from "@/hooks/use-inactivity-logout";
 import { cn } from "@/lib/utils";
 
 // ─── Mobile topbar (visible below md breakpoint) ──────────────────────────────
@@ -35,6 +36,7 @@ function MobileTopbar() {
 
 function AppContent({ children }: { children: ReactNode }) {
   const { isExpanded } = useSidebar();
+  useInactivityLogout();
   return (
     <motion.main
       className={cn(

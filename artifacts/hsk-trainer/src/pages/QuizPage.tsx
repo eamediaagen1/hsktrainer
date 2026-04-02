@@ -1,14 +1,15 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import {
   ChevronLeft, RotateCcw, CheckCircle2, XCircle, Trophy,
-  Lock, Loader2, LayoutDashboard,
+  Lock, Loader2, LayoutDashboard, Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { VocabWord } from "@/data/hskData";
 import { apiFetch } from "@/lib/api";
 import { useStudyPrefs } from "@/hooks/use-study-prefs";
+import { useLevelProgress } from "@/hooks/use-level-progress";
 import { cn } from "@/lib/utils";
 
 type QuestionType = "char-to-meaning" | "meaning-to-char" | "pinyin-to-char";
@@ -109,6 +110,9 @@ export default function QuizPage() {
   const params = useParams();
   const level = parseInt(params.level || "1");
   const { set: setPref } = useStudyPrefs();
+  const { submitExam } = useLevelProgress();
+  const examSubmitted = useRef(false);
+  const [nextLevelUnlocked, setNextLevelUnlocked] = useState(false);
 
   // All levels (1-6) are fetched from the authenticated API — premium required
   const { data: apiLevel, isLoading: wordsLoading, error: wordsError } = useQuery({
@@ -155,6 +159,24 @@ export default function QuizPage() {
     if (!initialized || questions.length === 0) return;
     saveState({ level, questions, currentIndex, score, phase, wrongIds });
   }, [level, questions, currentIndex, score, phase, initialized, wrongIds]);
+
+  // Submit exam result when entering result phase (runs once per quiz completion)
+  useEffect(() => {
+    if (phase !== "result" || !initialized || questions.length === 0) return;
+    if (examSubmitted.current) return;
+    examSubmitted.current = true;
+
+    submitExam.mutate(
+      { level, correct: score, total: questions.length },
+      {
+        onSuccess: (data) => {
+          if (data.next_level_unlocked) {
+            setNextLevelUnlocked(true);
+          }
+        },
+      }
+    );
+  }, [phase, initialized, questions.length, level, score, submitExam]);
 
   // ── Derived values ─────────────────────────────────────────────────────────
   const currentQuestion = questions[currentIndex];
@@ -439,7 +461,7 @@ export default function QuizPage() {
                 </p>
 
                 {/* Pass / fail badge */}
-                <div className="my-4">
+                <div className="my-4 flex flex-col items-center gap-3">
                   {isPassing ? (
                     <motion.span
                       initial={{ scale: 0.8, opacity: 0 }}
@@ -453,6 +475,21 @@ export default function QuizPage() {
                   ) : (
                     <p className="text-sm text-muted-foreground">Score 70%+ to pass. Keep practicing!</p>
                   )}
+
+                  {/* Next level unlocked banner */}
+                  <AnimatePresence>
+                    {nextLevelUnlocked && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.6, type: "spring" }}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-sm font-semibold"
+                      >
+                        <Sparkles className="w-4 h-4 shrink-0" />
+                        HSK {level + 1} unlocked!
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Correct / Incorrect breakdown */}
@@ -479,6 +516,21 @@ export default function QuizPage() {
 
                 {/* Actions */}
                 <div className="flex flex-col gap-2.5">
+                  {nextLevelUnlocked && level < 6 && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8, type: "spring" }}
+                      onClick={() => {
+                        clearState(level);
+                        setLocation(`/flashcards/${level + 1}`);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold bg-amber-500 text-white shadow-lg shadow-amber-500/25 hover:-translate-y-0.5 transition-all"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Start HSK {level + 1}
+                    </motion.button>
+                  )}
                   <button
                     onClick={handleReplay}
                     className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
