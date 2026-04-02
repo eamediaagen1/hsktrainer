@@ -129,7 +129,8 @@ router.get("/progress/levels", requireAuth, async (req, res) => {
     .order("level", { ascending: true });
 
   if (error) {
-    res.status(500).json({ error: "Failed to fetch level progress" });
+    // Table may not exist yet (migration pending) — return empty array so UI degrades gracefully
+    res.json([]);
     return;
   }
 
@@ -173,7 +174,11 @@ router.post("/progress/exam", requireAuth, requirePremium, async (req, res) => {
     );
 
   if (error) {
-    res.status(500).json({ error: "Failed to save exam result" });
+    // Table may not exist yet (migration pending)
+    const msg = error.message?.includes("does not exist")
+      ? "Level progress table not found. Please run migration 006 in Supabase."
+      : "Failed to save exam result";
+    res.status(500).json({ error: msg });
     return;
   }
 

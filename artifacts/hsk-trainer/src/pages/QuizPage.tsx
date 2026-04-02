@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import {
-  ChevronLeft, RotateCcw, CheckCircle2, XCircle, Trophy,
+  ChevronLeft, ChevronRight, RotateCcw, CheckCircle2, XCircle, Trophy,
   Lock, Loader2, LayoutDashboard, Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -516,49 +516,79 @@ export default function QuizPage() {
 
                 {/* Actions */}
                 <div className="flex flex-col gap-2.5">
-                  {nextLevelUnlocked && level < 6 && (
-                    <motion.button
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.8, type: "spring" }}
-                      onClick={() => {
-                        clearState(level);
-                        setLocation(`/flashcards/${level + 1}`);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold bg-amber-500 text-white shadow-lg shadow-amber-500/25 hover:-translate-y-0.5 transition-all"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      Start HSK {level + 1}
-                    </motion.button>
+                  {isPassing ? (
+                    /* ── Passed: primary CTA is "Continue to next level" ── */
+                    <>
+                      {level < 6 ? (
+                        <motion.button
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.5, type: "spring" }}
+                          onClick={() => {
+                            clearState(level);
+                            setLocation(`/flashcards/${level + 1}`);
+                          }}
+                          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
+                        >
+                          Continue to HSK {level + 1}
+                          <ChevronRight className="w-4 h-4" />
+                        </motion.button>
+                      ) : (
+                        <button
+                          onClick={() => setLocation("/levels")}
+                          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
+                        >
+                          All levels complete!
+                        </button>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setLocation(`/flashcards/${level}`)}
+                          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-card border-2 border-border text-foreground hover:bg-muted transition-colors"
+                        >
+                          Study Flashcards
+                        </button>
+                        <button
+                          onClick={() => setLocation("/levels")}
+                          className="flex-1 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border/60"
+                        >
+                          Level Select
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    /* ── Failed: primary CTA is "Retry Quiz" ── */
+                    <>
+                      <button
+                        onClick={handleReplay}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        Retry Quiz
+                      </button>
+                      <button
+                        onClick={() => setLocation(`/flashcards/${level}`)}
+                        className="w-full py-3 rounded-xl font-semibold bg-card border-2 border-border text-foreground hover:bg-muted transition-colors"
+                      >
+                        Study Flashcards
+                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setLocation("/dashboard")}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border/60"
+                        >
+                          <LayoutDashboard className="w-3.5 h-3.5" />
+                          Dashboard
+                        </button>
+                        <button
+                          onClick={() => setLocation("/levels")}
+                          className="flex-1 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border/60"
+                        >
+                          Level Select
+                        </button>
+                      </div>
+                    </>
                   )}
-                  <button
-                    onClick={handleReplay}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    Retry Quiz
-                  </button>
-                  <button
-                    onClick={() => setLocation(`/flashcards/${level}`)}
-                    className="w-full py-3 rounded-xl font-semibold bg-card border-2 border-border text-foreground hover:bg-muted transition-colors"
-                  >
-                    Study Flashcards
-                  </button>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setLocation("/dashboard")}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border/60"
-                    >
-                      <LayoutDashboard className="w-3.5 h-3.5" />
-                      Dashboard
-                    </button>
-                    <button
-                      onClick={() => setLocation("/levels")}
-                      className="flex-1 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border/60"
-                    >
-                      Level Select
-                    </button>
-                  </div>
                 </div>
               </div>
             </motion.div>
