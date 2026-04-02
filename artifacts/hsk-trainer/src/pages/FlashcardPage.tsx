@@ -21,9 +21,8 @@ function getCategories(words: typeof hskData): string[] {
 
 export default function FlashcardPage() {
   const [, setLocation] = useLocation();
-  const params = useParams<{ level: string; category?: string }>();
+  const params = useParams();
   const level = parseInt(params.level || "1");
-  const urlCategory = params.category ? decodeURIComponent(params.category) : null;
 
   const { toggleSaveCard, isCardSaved } = useSavedWords();
   const { prefs, set: setPref } = useStudyPrefs();
@@ -47,7 +46,7 @@ export default function FlashcardPage() {
 
   const categories = getCategories(allLevelWords);
 
-  const [activeCategory, setActiveCategory] = useState<string>(urlCategory ?? ALL_CATEGORIES);
+  const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [speechSupported] = useState(() => "speechSynthesis" in window);
@@ -163,13 +162,11 @@ export default function FlashcardPage() {
         {/* Header row */}
         <div className="flex items-center justify-between gap-3 px-4 h-[52px]">
           <button
-            onClick={() => setLocation(urlCategory ? `/levels/hsk/${level}` : "/levels")}
+            onClick={() => setLocation("/levels")}
             className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors rounded-lg py-1.5 px-2 -ml-2 hover:bg-muted"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline text-sm font-medium">
-              {urlCategory ? `HSK ${level}` : "Levels"}
-            </span>
+            <span className="hidden sm:inline text-sm font-medium">Levels</span>
           </button>
 
           <span className="font-bold font-serif text-base">HSK {level}</span>

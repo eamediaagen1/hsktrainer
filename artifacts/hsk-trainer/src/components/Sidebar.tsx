@@ -4,6 +4,8 @@ import {
   LayoutDashboard,
   BookOpen,
   MessageSquare,
+  PenLine,
+  Brain,
   Star,
   BarChart3,
   Settings,
@@ -42,22 +44,24 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Learning",
     items: [
-      { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-      { label: "Levels",    icon: BookOpen,        href: "/levels" },
-      { label: "Phrases",   icon: MessageSquare,   href: "/phrases" },
+      { label: "Dashboard",       icon: LayoutDashboard, href: "/dashboard" },
+      { label: "Levels",          icon: BookOpen,        href: "/levels" },
+      { label: "Phrases",         icon: MessageSquare,   href: "/phrases",  badge: "NEW" },
+      { label: "Stroke Learning", icon: PenLine,         href: "/strokes",  badge: "NEW" },
     ],
   },
   {
     title: "Practice",
     items: [
-      { label: "Review Mode", icon: Star, href: "/review" },
+      { label: "Quiz",            icon: Brain,           href: "/quiz/1" },
+      { label: "Review Mode",     icon: Star,            href: "/review" },
     ],
   },
   {
     title: "Account",
     items: [
-      { label: "Progress", icon: BarChart3, href: "/progress" },
-      { label: "Settings", icon: Settings,  href: "/settings" },
+      { label: "Progress",        icon: BarChart3,       href: "/progress" },
+      { label: "Settings",        icon: Settings,        href: "/settings" },
     ],
   },
 ];
@@ -436,9 +440,9 @@ export function Sidebar() {
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return location === "/dashboard";
-    if (href === "/levels") return location === "/levels" || location.startsWith("/levels/hsk");
-    if (href === "/phrases") return location.startsWith("/phrases");
-    if (href === "/review") return location === "/review";
+    if (href === "/levels") return location === "/levels";
+    if (href === "/flashcards/1") return location.startsWith("/flashcards");
+    if (href === "/quiz/1") return location.startsWith("/quiz");
     return location === href;
   };
 

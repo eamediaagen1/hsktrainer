@@ -38,18 +38,11 @@ workspace/
 ## HSK Trainer — Feature Summary
 
 ### Access Model
-- **All HSK content (1–6)**: Premium only — served from `GET /api/lessons?level=N` (requires valid Supabase JWT + `is_premium = true`)
-- **Free users**: Demo experience only at `/demo` (10 hardcoded HSK1 words + 5-question quiz, no auth required)
-- **Premium**: Full access to all 6 HSK levels via Gumroad purchase or admin grant
-
-### Learning Structure (per level)
-Each HSK level (`/levels/hsk/:level`) has 3 sections:
-1. **Flashcards** — vocabulary by category (12 categories for HSK1). Each category card: Study → `/flashcards/:level/:category`, Quiz → `/quiz/:level/:category`, Test → `/quiz/:level/:category?test=1`
-2. **Common Phrases** — HSK1 has 35 phrases across 6 categories (Greetings, Food & Drink, Time & Dates, Family, Daily Life, Travel). Browsable at `/phrases?category=:name`
-3. **Pass HSK Exam** — full 20-question assessment from all level words → `/quiz/:level`
+- **HSK 1**: Free, words served from bundled `hskData.ts` (frontend-only)
+- **HSK 2–6**: Premium, words served exclusively from `GET /api/lessons?level=N` (requires valid Supabase JWT + `is_premium = true` in DB)
 
 ### Frontend (`artifacts/hsk-trainer`)
-- **Pages**: MarketingPage, LandingPage (magic link), AuthCallback, DemoPage (`/demo` — public), DashboardPage (`/dashboard`), LevelSelection (`/levels`), LevelOverviewPage (`/levels/hsk/:level`), FlashcardPage, ReviewPage, QuizPage, PhrasesPage, ProgressPage, SettingsPage, AdminPage / AdminLoginPage
+- **Pages**: MarketingPage, LandingPage (magic link), AuthCallback, DashboardPage (`/dashboard`), LevelSelection (`/levels`), FlashcardPage, ReviewPage, QuizPage, ProgressPage, SettingsPage, AdminPage / AdminLoginPage
 - **Auth context**: `src/contexts/auth-context.tsx` — `AuthProvider` + `useAuth` hook
 - **Data hooks**: `use-profile.ts`, `use-saved-words.ts`, `use-study-prefs.ts`
   - `useStudyPrefs()` → `{ prefs: { showPinyin, autoPlay, lastLevel }, set }` — persisted to `hsk_study_prefs` in localStorage

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useLocation, useParams, useSearch } from "wouter";
+import { useLocation, useParams } from "wouter";
 import {
   ChevronLeft, RotateCcw, CheckCircle2, XCircle, Trophy,
   Lock, Loader2, LayoutDashboard,
@@ -21,8 +21,7 @@ interface Question {
   correctAnswer: string;
 }
 
-const FULL_QUIZ_SIZE = 20;
-const TEST_QUIZ_SIZE = 5;
+const QUIZ_SIZE = 20;
 const PASS_THRESHOLD = 0.7; // 70% to pass
 
 const QUESTION_LABELS: Record<QuestionType, string> = {
@@ -31,8 +30,7 @@ const QUESTION_LABELS: Record<QuestionType, string> = {
   "pinyin-to-char":  "Which character matches this pronunciation?",
 };
 
-const SESSION_KEY = (level: number, category?: string, test?: boolean) =>
-  `hsk_quiz_state_${level}${category ? `_cat_${category}` : ""}${test ? "_test" : ""}`;
+const SESSION_KEY = (level: number) => `hsk_quiz_state_${level}`;
 
 function shuffle<T>(arr: T[]): T[] {
   const out = [...arr];
@@ -43,8 +41,8 @@ function shuffle<T>(arr: T[]): T[] {
   return out;
 }
 
-function generateQuiz(words: VocabWord[], size: number = FULL_QUIZ_SIZE): Question[] {
-  const pool = shuffle(words).slice(0, Math.min(size, words.length));
+function generateQuiz(words: VocabWord[]): Question[] {
+  const pool = shuffle(words).slice(0, Math.min(QUIZ_SIZE, words.length));
   return pool.map((word) => {
     const types: QuestionType[] = ["char-to-meaning", "meaning-to-char", "pinyin-to-char"];
     const type = types[Math.floor(Math.random() * types.length)];
@@ -83,17 +81,18 @@ interface PersistedState {
   wrongIds: string[];
 }
 
-function saveState(state: PersistedState, category?: string | null, test?: boolean) {
+function saveState(state: PersistedState) {
   try {
-    sessionStorage.setItem(SESSION_KEY(state.level, category ?? undefined, test), JSON.stringify(state));
+    sessionStorage.setItem(SESSION_KEY(state.level), JSON.stringify(state));
   } catch { /* storage quota */ }
 }
 
-function loadState(level: number, category?: string | null, test?: boolean): PersistedState | null {
+function loadState(level: number): PersistedState | null {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY(level, category ?? undefined, test));
+    const raw = sessionStorage.getItem(SESSION_KEY(level));
     if (!raw) return null;
     const s = JSON.parse(raw) as PersistedState;
+    // Validate it's for the same level and still has valid structure
     if (s.level !== level || !Array.isArray(s.questions) || s.questions.length === 0) return null;
     return s;
   } catch {
@@ -101,19 +100,14 @@ function loadState(level: number, category?: string | null, test?: boolean): Per
   }
 }
 
-function clearState(level: number, category?: string | null, test?: boolean) {
-  try { sessionStorage.removeItem(SESSION_KEY(level, category ?? undefined, test)); } catch { /* ignore */ }
+function clearState(level: number) {
+  try { sessionStorage.removeItem(SESSION_KEY(level)); } catch { /* ignore */ }
 }
 
 export default function QuizPage() {
   const [, setLocation] = useLocation();
-  const params = useParams<{ level: string; category?: string }>();
-  const search = useSearch();
+  const params = useParams();
   const level = parseInt(params.level || "1");
-  const urlCategory = params.category ? decodeURIComponent(params.category) : null;
-  const isTestMode = new URLSearchParams(search).get("test") === "1";
-  const quizSize = isTestMode ? TEST_QUIZ_SIZE : FULL_QUIZ_SIZE;
-
   const { set: setPref } = useStudyPrefs();
 
   // All levels (1-6) are fetched from the authenticated API — premium required
@@ -126,11 +120,7 @@ export default function QuizPage() {
     staleTime: 30 * 60 * 1000,
   });
 
-  // Filter by category if provided — full level pool still needed for distractors
-  const allLevelWords: VocabWord[] = apiLevel ?? [];
-  const levelWords: VocabWord[] = urlCategory
-    ? allLevelWords.filter((w) => w.category === urlCategory)
-    : allLevelWords;
+  const levelWords: VocabWord[] = apiLevel ?? [];
 
   // ── State (try to restore from sessionStorage) ─────────────────────────────
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -144,8 +134,8 @@ export default function QuizPage() {
   // Initialise from persisted state or generate fresh questions (always from API)
   useEffect(() => {
     if (initialized) return;
-    if (apiLevel && apiLevel.length > 0 && levelWords.length > 0) {
-      const restored = loadState(level, urlCategory, isTestMode);
+    if (apiLevel && apiLevel.length > 0) {
+      const restored = loadState(level);
       if (restored) {
         setQuestions(restored.questions);
         setCurrentIndex(restored.currentIndex);
@@ -153,18 +143,18 @@ export default function QuizPage() {
         setWrongIds(restored.wrongIds ?? []);
         setPhase(restored.phase);
       } else {
-        setQuestions(generateQuiz(levelWords, quizSize));
+        setQuestions(generateQuiz(apiLevel));
       }
       setInitialized(true);
       setPref("lastLevel", level);
     }
-  }, [apiLevel, levelWords, level, urlCategory, isTestMode, quizSize, initialized, setPref]);
+  }, [apiLevel, level, initialized, setPref]);
 
   // Persist state on every relevant change (after init)
   useEffect(() => {
     if (!initialized || questions.length === 0) return;
-    saveState({ level, questions, currentIndex, score, phase, wrongIds }, urlCategory, isTestMode);
-  }, [level, questions, currentIndex, score, phase, initialized, wrongIds, urlCategory, isTestMode]);
+    saveState({ level, questions, currentIndex, score, phase, wrongIds });
+  }, [level, questions, currentIndex, score, phase, initialized, wrongIds]);
 
   // ── Derived values ─────────────────────────────────────────────────────────
   const currentQuestion = questions[currentIndex];
@@ -202,15 +192,15 @@ export default function QuizPage() {
   }, [currentIndex, questions.length]);
 
   const handleReplay = useCallback(() => {
-    clearState(level, urlCategory, isTestMode);
-    const newQs = generateQuiz(levelWords, quizSize);
+    clearState(level);
+    const newQs = generateQuiz(levelWords);
     setQuestions(newQs);
     setCurrentIndex(0);
     setSelected(null);
     setScore(0);
     setWrongIds([]);
     setPhase("quiz");
-  }, [levelWords, level, urlCategory, isTestMode, quizSize]);
+  }, [levelWords, level]);
 
   // ── Loading state ──────────────────────────────────────────────────────────
   if (wordsLoading) {
@@ -287,21 +277,17 @@ export default function QuizPage() {
       {/* ── Sticky header ─────────────────────────────────────── */}
       <header className="sticky top-[52px] md:top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/50 h-[52px] flex items-center justify-between px-4 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
         <button
-          onClick={() => setLocation(urlCategory ? `/levels/hsk/${level}` : "/levels")}
+          onClick={() => setLocation("/levels")}
           className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors rounded-lg py-1.5 px-2 -ml-2 hover:bg-muted"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:inline text-sm font-medium">
-            {urlCategory ? `HSK ${level}` : "Levels"}
-          </span>
+          <span className="hidden sm:inline text-sm font-medium">Levels</span>
         </button>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-gold" />
-            <span className="font-bold font-serif text-base">
-              {isTestMode ? "Quick Test" : urlCategory ? `${urlCategory}` : `HSK ${level} Exam`}
-            </span>
+            <span className="font-bold font-serif text-base">HSK {level} Quiz</span>
           </div>
         </div>
 
@@ -444,13 +430,8 @@ export default function QuizPage() {
                   {isPassing ? <CheckCircle2 className="w-8 h-8" /> : <Trophy className="w-8 h-8" />}
                 </div>
 
-                <h2 className="text-2xl font-serif font-bold text-foreground mb-1">
-                  {isTestMode ? "Test Complete!" : "Quiz Complete!"}
-                </h2>
-                <p className="text-sm text-muted-foreground mb-5">
-                  {urlCategory ? `${urlCategory}` : `HSK ${level}`} · {questions.length} questions
-                  {isTestMode && " · Quick Test"}
-                </p>
+                <h2 className="text-2xl font-serif font-bold text-foreground mb-1">Quiz Complete!</h2>
+                <p className="text-sm text-muted-foreground mb-5">HSK {level} · {questions.length} questions</p>
 
                 {/* Score */}
                 <p className="text-6xl font-bold text-foreground tabular-nums">
@@ -506,13 +487,7 @@ export default function QuizPage() {
                     Retry Quiz
                   </button>
                   <button
-                    onClick={() =>
-                      setLocation(
-                        urlCategory
-                          ? `/flashcards/${level}/${encodeURIComponent(urlCategory)}`
-                          : `/flashcards/${level}`
-                      )
-                    }
+                    onClick={() => setLocation(`/flashcards/${level}`)}
                     className="w-full py-3 rounded-xl font-semibold bg-card border-2 border-border text-foreground hover:bg-muted transition-colors"
                   >
                     Study Flashcards
@@ -526,10 +501,10 @@ export default function QuizPage() {
                       Dashboard
                     </button>
                     <button
-                      onClick={() => setLocation(urlCategory ? `/levels/hsk/${level}` : "/levels")}
+                      onClick={() => setLocation("/levels")}
                       className="flex-1 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-border/60"
                     >
-                      {urlCategory ? `HSK ${level}` : "Level Select"}
+                      Level Select
                     </button>
                   </div>
                 </div>
