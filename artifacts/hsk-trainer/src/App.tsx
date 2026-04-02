@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import MarketingPage    from "@/pages/MarketingPage";
 import LandingPage      from "@/pages/LandingPage";
 import AuthCallback     from "@/pages/AuthCallback";
+import DemoPage         from "@/pages/DemoPage";
 import DashboardPage    from "@/pages/DashboardPage";
 import LevelSelection   from "@/pages/LevelSelection";
 import FlashcardPage    from "@/pages/FlashcardPage";
@@ -77,7 +78,10 @@ function Router() {
   }, [location, user, navigate]);
 
   const isPublicRoute =
-    location === "/" || location === "/app" || location === "/auth/callback";
+    location === "/" ||
+    location === "/app" ||
+    location === "/auth/callback" ||
+    location === "/demo";
 
   if (isPublicRoute) {
     return (
@@ -85,6 +89,7 @@ function Router() {
         <Route path="/"              component={MarketingPage} />
         <Route path="/app"           component={LandingPage} />
         <Route path="/auth/callback" component={AuthCallback} />
+        <Route path="/demo"          component={DemoPage} />
       </Switch>
     );
   }

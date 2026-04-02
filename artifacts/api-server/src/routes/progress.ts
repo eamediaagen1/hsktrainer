@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { supabaseAdmin } from "../lib/supabase.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requirePremium } from "../middleware/auth.js";
 import { hskData } from "../data/hskData.js";
 
 const router = Router();
@@ -33,8 +33,8 @@ router.get("/progress", requireAuth, async (req, res) => {
   res.json(enriched);
 });
 
-// POST /api/progress — save or unsave a word
-router.post("/progress", requireAuth, async (req, res) => {
+// POST /api/progress — save or unsave a word (requires premium)
+router.post("/progress", requireAuth, requirePremium, async (req, res) => {
   const { word_id, action } = req.body as {
     word_id?: string;
     action?: "save" | "unsave";
@@ -76,8 +76,8 @@ router.post("/progress", requireAuth, async (req, res) => {
   }
 });
 
-// PATCH /api/progress/:wordId — update spaced-repetition schedule
-router.patch("/progress/:wordId", requireAuth, async (req, res) => {
+// PATCH /api/progress/:wordId — update spaced-repetition schedule (requires premium)
+router.patch("/progress/:wordId", requireAuth, requirePremium, async (req, res) => {
   const { wordId } = req.params;
   const { difficulty } = req.body as {
     difficulty?: "hard" | "good" | "easy";

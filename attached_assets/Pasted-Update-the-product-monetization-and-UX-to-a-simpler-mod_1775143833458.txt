@@ -1,0 +1,254 @@
+Update the product monetization and UX to a simpler model:
+
+NEW MODEL:
+- All HSK levels (HSK1–HSK6) are available ONLY for premium users
+- No partial gating by level anymore
+- Premium = full unlock of the entire product
+- Free users should not access full learning content
+- Instead, free users should use a separate demo experience
+
+--------------------------------
+GOALS
+--------------------------------
+
+1. Remove level-based premium gating
+2. Unlock ALL HSK levels when user is premium
+3. Add a clear “Premium” indicator in the sidebar/navigation
+4. Create a separate Demo page to showcase the product
+5. Improve upgrade clarity and conversion
+6. Keep everything secure (no frontend leaks of premium content)
+
+--------------------------------
+PART 1 — PREMIUM ACCESS LOGIC
+--------------------------------
+
+Change access rules:
+
+OLD:
+- HSK1 free
+- HSK2+ premium
+
+NEW:
+- ALL HSK levels require premium
+- Premium users get full access
+- Non-premium users:
+  - cannot access full lessons
+  - cannot access full quizzes
+  - should be redirected or shown upgrade UI
+
+Implement:
+
+- Update all server-side checks:
+  - Replace level-based checks with:
+    is_premium === true
+
+- Update all API routes:
+  - lessons
+  - quiz data
+  - progress
+  Ensure:
+  - non-premium users get 403 for protected content
+
+- Ensure frontend respects:
+  - 403 → show paywall / upgrade screen
+
+--------------------------------
+PART 2 — DEMO EXPERIENCE (IMPORTANT)
+--------------------------------
+
+Create a Demo page:
+
+Route:
+- /demo
+
+Purpose:
+- Let non-premium users experience the product safely
+
+Demo should include:
+- limited set of words (hardcoded or safe subset)
+- small quiz (5–10 questions)
+- basic interaction (no real progress saving)
+- no access to full dataset
+- no backend premium APIs required
+
+Demo UX:
+- simple
+- fast
+- shows real value
+- includes upgrade CTA
+
+Add:
+- button: “Try Demo”
+- visible from landing page
+
+--------------------------------
+PART 3 — SIDEBAR / NAVIGATION UPDATE
+--------------------------------
+
+Update main navigation:
+
+Add:
+- Dashboard
+- Demo (if not premium)
+- Levels (premium only or gated)
+- Quiz
+- Settings
+- Premium indicator
+
+Add premium UI:
+
+If user is premium:
+- show badge:
+  “Premium ✓”
+
+If user is NOT premium:
+- show:
+  “Free plan”
+  + “Upgrade” button
+
+Make this visible in:
+- sidebar
+- dashboard
+- settings
+
+--------------------------------
+PART 4 — PAYWALL UX
+--------------------------------
+
+When non-premium user tries to access protected content:
+
+Show a clean paywall screen:
+- headline: “Unlock Full Access”
+- explain:
+  - all HSK levels
+  - full quizzes
+  - full progress tracking
+- CTA:
+  - “Upgrade to Premium”
+  - link to Gumroad checkout
+
+Make sure:
+- this appears consistently across:
+  - levels
+  - quiz
+  - dashboard actions
+
+--------------------------------
+PART 5 — DASHBOARD UPDATE
+--------------------------------
+
+Update dashboard behavior:
+
+If user is NOT premium:
+- show:
+  - locked state
+  - demo CTA
+  - upgrade CTA
+  - preview of features
+
+If user IS premium:
+- show full dashboard:
+  - progress
+  - actions
+  - quiz access
+  - levels
+
+--------------------------------
+PART 6 — QUIZ SYSTEM ADJUSTMENT
+--------------------------------
+
+Update quiz access:
+
+- Premium users:
+  - full quiz (20 questions)
+  - real data
+
+- Free users:
+  - only demo quiz (on /demo)
+  - no access to full quiz routes
+
+Ensure:
+- server-side validation still protects quiz APIs
+
+--------------------------------
+PART 7 — SETTINGS UPDATE
+--------------------------------
+
+Update settings page:
+
+Add section:
+“Subscription”
+
+Show:
+- current plan:
+  - Free / Premium
+- if free:
+  - upgrade CTA
+- if premium:
+  - confirmation of access
+
+Remove any fake or unused settings.
+
+--------------------------------
+PART 8 — SECURITY
+--------------------------------
+
+Ensure:
+- no full lesson data is shipped to frontend for free users
+- premium APIs are always server-protected
+- demo uses separate data or safe subset
+- no bypass via frontend
+
+--------------------------------
+PART 9 — CLEANUP
+--------------------------------
+
+Remove:
+- old level-based gating logic
+- any HSK1 special-case free logic
+- inconsistent checks
+
+Replace with:
+- simple:
+  is_premium check everywhere
+
+--------------------------------
+PART 10 — DELIVERABLES
+--------------------------------
+
+At the end, provide:
+
+1. What was changed
+2. Files updated
+3. API changes
+4. Routing changes
+5. UI changes
+6. Any migration needed (if any)
+7. How premium gating now works
+8. How demo works
+
+--------------------------------
+CHECKLIST REQUIRED
+--------------------------------
+
+CHECKLIST 1 — Free User Flow
+- user sees demo page
+- cannot access full levels
+- cannot access full quiz
+- sees upgrade prompts
+- demo works correctly
+
+CHECKLIST 2 — Premium User Flow
+- full access to all levels
+- full quiz works
+- dashboard fully unlocked
+- premium badge visible
+- no paywall shown
+
+--------------------------------
+IMPLEMENTATION STYLE
+--------------------------------
+
+- Keep it simple
+- Keep it secure
+- Reuse ...

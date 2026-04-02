@@ -53,6 +53,7 @@ function Divider() {
 export default function MarketingPage() {
   const [, setLocation] = useLocation();
   const go = () => setLocation("/app");
+  const goDemo = () => setLocation("/demo");
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden">
@@ -74,7 +75,7 @@ export default function MarketingPage() {
             onClick={go}
             className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
           >
-            Start Free
+            Sign in
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -90,7 +91,7 @@ export default function MarketingPage() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gold/40 bg-gold/10 text-gold text-sm font-semibold mb-8"
           >
             <Star className="w-3.5 h-3.5 fill-gold" />
-            HSK 1 — Free, No Account Needed
+            All 6 HSK Levels — Lifetime Access
           </motion.div>
 
           {/* Headline */}
@@ -121,14 +122,14 @@ export default function MarketingPage() {
               onClick={go}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold text-base bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200"
             >
-              Start Learning Free
+              Get Started
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
-              onClick={go}
+              onClick={goDemo}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base bg-card border-2 border-border text-foreground hover:bg-muted hover:border-primary/30 transition-all duration-200"
             >
-              Try a Demo Quiz
+              Try Free Demo
             </button>
           </motion.div>
 
@@ -137,7 +138,7 @@ export default function MarketingPage() {
             variants={fadeUp} initial="hidden" animate="show" custom={4}
             className="mt-5 text-sm text-muted-foreground"
           >
-            No credit card. No signup friction. Just open and study.
+            Try the free demo — no account needed. Upgrade for full access.
           </motion.p>
 
           {/* Hero visual — decorative character display */}
@@ -161,7 +162,7 @@ export default function MarketingPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">1 of 150 HSK 1 words</p>
+              <p className="text-xs text-muted-foreground mt-2">Preview — HSK 1 · 150 words</p>
             </div>
           </motion.div>
         </div>
@@ -312,38 +313,26 @@ export default function MarketingPage() {
               </p>
               <div className="space-y-3">
                 {[
-                  { level: "HSK 1", words: "150 words", free: true },
-                  { level: "HSK 2", words: "300 words", free: false },
-                  { level: "HSK 3", words: "600 words", free: false },
-                ].map(({ level, words, free }) => (
+                  { level: "HSK 1", words: "150 words" },
+                  { level: "HSK 2", words: "300 words" },
+                  { level: "HSK 3", words: "600 words" },
+                ].map(({ level, words }) => (
                   <div
                     key={level}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
-                      free
-                        ? "border-primary/40 bg-primary/5"
-                        : "border-border/40 bg-muted/40 opacity-60"
-                    }`}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/40 bg-muted/40"
                   >
                     <div>
-                      <p className={`font-bold text-sm ${free ? "text-primary" : "text-muted-foreground"}`}>
-                        {level}
-                      </p>
+                      <p className="font-bold text-sm text-foreground">{level}</p>
                       <p className="text-xs text-muted-foreground">{words}</p>
                     </div>
-                    {free ? (
-                      <span className="text-xs font-bold px-2 py-1 rounded-full bg-primary/10 text-primary">
-                        Free
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                        Premium
-                      </span>
-                    )}
+                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary">
+                      Premium
+                    </span>
                   </div>
                 ))}
               </div>
               <p className="text-xs text-muted-foreground mt-5">
-                HSK 2–6 unlocking soon. Start with HSK 1 today.
+                All 6 levels unlocked with a single purchase.
               </p>
             </motion.div>
 
@@ -499,20 +488,28 @@ export default function MarketingPage() {
             Ready to start?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
-            Begin with HSK 1 — free, today. No account required.
-            Just open the app and study your first word.
+            Try the free demo with 10 words and a 5-question quiz.
+            Upgrade once for lifetime access to all 6 HSK levels.
           </p>
 
-          <button
-            onClick={go}
-            className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl font-bold text-base bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
-          >
-            Start with HSK 1 — Free
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={go}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-bold text-base bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
+            >
+              Get Started
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={goDemo}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base bg-card border-2 border-border text-foreground hover:bg-muted hover:border-primary/30 transition-all duration-200"
+            >
+              Try Free Demo
+            </button>
+          </div>
 
           <p className="mt-5 text-sm text-muted-foreground">
-            No signup. No credit card. Open and go.
+            Demo needs no account. Full access with a one-time purchase.
           </p>
 
           {/* 加油 = "Keep going!" subtle footnote */}
@@ -531,11 +528,13 @@ export default function MarketingPage() {
             <span>— Learn Chinese, one level at a time.</span>
           </div>
           <div className="flex items-center gap-5">
-            <button onClick={go} className="hover:text-foreground transition-colors">
-              Start Free
+            <button onClick={goDemo} className="hover:text-foreground transition-colors">
+              Try Demo
             </button>
             <span>·</span>
-            <span>HSK 1 available now</span>
+            <button onClick={go} className="hover:text-foreground transition-colors">
+              Sign in
+            </button>
           </div>
         </div>
       </footer>

@@ -11,12 +11,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 const levels = [
-  { id: 1, count: 150,  title: "Beginner",          locked: false },
-  { id: 2, count: 150,  title: "Elementary",         locked: true  },
-  { id: 3, count: 300,  title: "Intermediate",       locked: true  },
-  { id: 4, count: 600,  title: "Upper-Intermediate", locked: true  },
-  { id: 5, count: 1300, title: "Advanced",           locked: true  },
-  { id: 6, count: 2500, title: "Mastery",            locked: true  },
+  { id: 1, count: 150,  title: "Beginner",          locked: true },
+  { id: 2, count: 150,  title: "Elementary",         locked: true },
+  { id: 3, count: 300,  title: "Intermediate",       locked: true },
+  { id: 4, count: 600,  title: "Upper-Intermediate", locked: true },
+  { id: 5, count: 1300, title: "Advanced",           locked: true },
+  { id: 6, count: 2500, title: "Mastery",            locked: true },
 ];
 
 // Configure via VITE_GUMROAD_URL in Replit Secrets
@@ -97,7 +97,7 @@ export default function LevelSelection() {
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl bg-gold/5 border border-gold/20">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground">
-              Unlock HSK 2–6 for lifetime access
+              Unlock all HSK levels — 1 through 6
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Already purchased? Click Sync to activate your access.
@@ -160,7 +160,7 @@ export default function LevelSelection() {
                     <Lock className="w-4 h-4 text-muted-foreground/60" />
                   </div>
                 )}
-                {!isLocked && level.id > 1 && (
+                {!isLocked && (
                   <div className="absolute top-4 right-4">
                     <Trophy className="w-4 h-4 text-gold" />
                   </div>

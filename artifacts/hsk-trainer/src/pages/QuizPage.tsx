@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { hskData, VocabWord } from "@/data/hskData";
+import { VocabWord } from "@/data/hskData";
 import { apiFetch } from "@/lib/api";
 import { useStudyPrefs } from "@/hooks/use-study-prefs";
 import { cn } from "@/lib/utils";
@@ -110,19 +110,17 @@ export default function QuizPage() {
   const level = parseInt(params.level || "1");
   const { set: setPref } = useStudyPrefs();
 
-  // Fetch premium-level words from the API (level 1 uses local data)
+  // All levels (1-6) are fetched from the authenticated API — premium required
   const { data: apiLevel, isLoading: wordsLoading, error: wordsError } = useQuery({
     queryKey: ["lessons", level],
     queryFn: () =>
       apiFetch<{ level: number; words: VocabWord[] }>(`/api/lessons?level=${level}`).then(
         (r) => r.words
       ),
-    enabled: level > 1,
     staleTime: 30 * 60 * 1000,
   });
 
-  const levelWords: VocabWord[] =
-    level === 1 ? hskData.filter((w) => w.hskLevel === 1) : (apiLevel ?? []);
+  const levelWords: VocabWord[] = apiLevel ?? [];
 
   // ── State (try to restore from sessionStorage) ─────────────────────────────
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -133,27 +131,9 @@ export default function QuizPage() {
   const [phase, setPhase] = useState<"quiz" | "result">("quiz");
   const [initialized, setInitialized] = useState(false);
 
-  // Initialise from persisted state or generate fresh questions
+  // Initialise from persisted state or generate fresh questions (always from API)
   useEffect(() => {
     if (initialized) return;
-    if (level === 1) {
-      const restored = loadState(level);
-      if (restored) {
-        setQuestions(restored.questions);
-        setCurrentIndex(restored.currentIndex);
-        setScore(restored.score);
-        setWrongIds(restored.wrongIds ?? []);
-        setPhase(restored.phase);
-      } else {
-        const qs = generateQuiz(hskData.filter((w) => w.hskLevel === 1));
-        setQuestions(qs);
-      }
-      setInitialized(true);
-    }
-  }, [level, initialized]);
-
-  useEffect(() => {
-    if (initialized || level === 1) return;
     if (apiLevel && apiLevel.length > 0) {
       const restored = loadState(level);
       if (restored) {
@@ -166,7 +146,6 @@ export default function QuizPage() {
         setQuestions(generateQuiz(apiLevel));
       }
       setInitialized(true);
-      // Remember the user's current level for dashboard
       setPref("lastLevel", level);
     }
   }, [apiLevel, level, initialized, setPref]);
@@ -224,7 +203,7 @@ export default function QuizPage() {
   }, [levelWords, level]);
 
   // ── Loading state ──────────────────────────────────────────────────────────
-  if (level > 1 && wordsLoading) {
+  if (wordsLoading) {
     return (
       <div className="min-h-full flex items-center justify-center">
         <div className="text-center p-8 flex flex-col items-center gap-4">
@@ -236,7 +215,7 @@ export default function QuizPage() {
   }
 
   // ── Paywall / error ─────────────────────────────────────────────────────────
-  if (level > 1 && wordsError) {
+  if (wordsError) {
     const isPremiumError = (wordsError as { status?: number })?.status === 403;
     return (
       <div className="min-h-full flex items-center justify-center p-6">
@@ -249,7 +228,7 @@ export default function QuizPage() {
           </h2>
           <p className="text-muted-foreground text-sm">
             {isPremiumError
-              ? "HSK 2–6 quizzes require a premium subscription."
+              ? "All HSK level quizzes require a premium subscription."
               : "Could not load quiz words. Please try again."}
           </p>
           {isPremiumError && (

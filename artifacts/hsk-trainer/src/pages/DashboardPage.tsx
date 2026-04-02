@@ -173,7 +173,7 @@ export default function DashboardPage() {
             {dueCount > 0
               ? `You have ${dueCount} card${dueCount !== 1 ? "s" : ""} ready to review.`
               : isNew
-              ? "Start studying HSK 1 — it's free!"
+              ? "Choose a level to get started."
               : "You're all caught up. Keep the streak going!"}
           </p>
         </div>
@@ -276,9 +276,9 @@ export default function DashboardPage() {
                   <Lock className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Unlock HSK 2–6</p>
+                  <p className="text-sm font-semibold text-foreground">Unlock All HSK Levels</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    One-time purchase · lifetime access to all 5,000+ words
+                    One-time purchase · lifetime access to HSK 1–6 (5,000+ words)
                   </p>
                   {syncMsg && (
                     <p className="text-xs text-foreground/70 mt-1">{syncMsg}</p>
@@ -371,16 +371,16 @@ export default function DashboardPage() {
           <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-6 h-6 text-primary" />
           </div>
-          <h3 className="text-base font-bold text-foreground mb-1">Start your first session</h3>
+          <h3 className="text-base font-bold text-foreground mb-1">Start studying</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Study your first HSK 1 words and save them for spaced-repetition review.
+            Upgrade to premium to access all HSK 1–6 levels and save words for review.
           </p>
           <button
-            onClick={() => navigate("/flashcards/1")}
+            onClick={() => navigate("/levels")}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm"
           >
             <BookOpen className="w-4 h-4" />
-            Study HSK 1 — Free
+            View Levels
           </button>
         </motion.section>
       )}

@@ -14,10 +14,13 @@ import {
   ChevronRight,
   Lock,
   X,
+  ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "@/contexts/sidebar-context";
 import { useAuth } from "@/contexts/auth-context";
+import { useProfile } from "@/hooks/use-profile";
 import { useSavedWords } from "@/hooks/use-saved-words";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
@@ -166,6 +169,9 @@ function NavButton({
 
 // ─── Inner sidebar content (shared between desktop + mobile) ──────────────────
 
+const GUMROAD_URL =
+  (import.meta.env.VITE_GUMROAD_URL as string | undefined) ?? "https://gumroad.com";
+
 function SidebarContent({
   isExpanded,
   navigate,
@@ -173,6 +179,7 @@ function SidebarContent({
   isActive,
   dueCount,
   email,
+  isPremium,
   onToggleExpanded,
   showCollapseToggle,
 }: {
@@ -182,6 +189,7 @@ function SidebarContent({
   isActive: (href: string) => boolean;
   dueCount: number;
   email: string | null;
+  isPremium: boolean;
   onToggleExpanded?: () => void;
   showCollapseToggle?: boolean;
 }) {
@@ -251,6 +259,63 @@ function SidebarContent({
           </div>
         ))}
       </nav>
+
+      {/* Premium / upgrade strip */}
+      <div className="px-2 pb-1 shrink-0">
+        {isPremium ? (
+          isExpanded ? (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Premium · All levels</span>
+            </div>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex justify-center py-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>Premium active</TooltipContent>
+            </Tooltip>
+          )
+        ) : (
+          isExpanded ? (
+            <div className="flex flex-col gap-1 px-1 py-1">
+              <button
+                onClick={() => navigate("/demo")}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                Try Free Demo
+              </button>
+              <a
+                href={GUMROAD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Lock className="w-3.5 h-3.5 shrink-0" />
+                Upgrade to Premium
+                <ExternalLink className="w-3 h-3 ml-auto opacity-60" />
+              </a>
+            </div>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href={GUMROAD_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex justify-center py-1.5 text-primary hover:text-primary/80 transition-colors"
+                >
+                  <Lock className="w-4 h-4" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>Upgrade to Premium</TooltipContent>
+            </Tooltip>
+          )
+        )}
+      </div>
 
       {/* Theme toggle */}
       <div className="px-2 pb-1 shrink-0">
@@ -355,8 +420,10 @@ export function Sidebar() {
   const [location, setLocation] = useLocation();
   const { isExpanded, isMobileOpen, toggleExpanded, closeMobile } = useSidebar();
   const { user, signOut } = useAuth();
+  const { data: profile } = useProfile();
   const { getDueCards } = useSavedWords();
   const email = user?.email ?? null;
+  const isPremium = profile?.is_premium ?? false;
 
   const dueCount = getDueCards().length;
 
@@ -379,7 +446,7 @@ export function Sidebar() {
     return location === href;
   };
 
-  const commonProps = { navigate, handleLogout, isActive, dueCount, email };
+  const commonProps = { navigate, handleLogout, isActive, dueCount, email, isPremium };
 
   return (
     <>

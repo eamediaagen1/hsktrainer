@@ -159,7 +159,7 @@ export default function SettingsPage() {
                       <Check className="w-3 h-3" /> Premium · All HSK levels
                     </span>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Free plan · HSK 1 only</span>
+                    <span className="text-xs text-muted-foreground">Free plan · Demo access only</span>
                   )}
                 </div>
               </div>
@@ -212,7 +212,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">Free plan</p>
-                    <p className="text-xs text-muted-foreground mt-px">HSK 1 only · 150 words</p>
+                    <p className="text-xs text-muted-foreground mt-px">Demo access · try the free preview</p>
                   </div>
                 </div>
                 <a

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import { ArrowLeft, ArrowRight, Star, ChevronLeft, Volume2, Lock, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { hskData, type VocabWord } from "@/data/hskData";
+import { type VocabWord } from "@/data/hskData";
 import { useSavedWords } from "@/hooks/use-saved-words";
 import { useStudyPrefs } from "@/hooks/use-study-prefs";
 import { apiFetch } from "@/lib/api";
@@ -32,23 +32,19 @@ export default function FlashcardPage() {
     setPref("lastLevel", level);
   }, [level, setPref]);
 
-  // Level 1 words come from local data (free, no API needed)
-  // Level 2-6 words are fetched from the authenticated API
+  // All levels (1-6) are fetched from the authenticated API — premium required
   const { data: apiLevel, isLoading: wordsLoading, error: wordsError } = useQuery({
     queryKey: ["lessons", level],
     queryFn: () =>
       apiFetch<{ level: number; words: VocabWord[] }>(`/api/lessons?level=${level}`).then(
         (r) => r.words
       ),
-    enabled: level > 1,
     staleTime: 30 * 60 * 1000,
   });
 
-  const allLevelWords: VocabWord[] =
-    level === 1 ? hskData.filter((w) => w.hskLevel === 1) : (apiLevel ?? []);
+  const allLevelWords: VocabWord[] = apiLevel ?? [];
 
-  const isHsk1 = level === 1;
-  const categories = isHsk1 ? getCategories(allLevelWords) : [];
+  const categories = getCategories(allLevelWords);
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -57,7 +53,7 @@ export default function FlashcardPage() {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const levelWords =
-    isHsk1 && activeCategory !== ALL_CATEGORIES
+    activeCategory !== ALL_CATEGORIES
       ? allLevelWords.filter((w) => w.category === activeCategory)
       : allLevelWords;
 
@@ -92,8 +88,8 @@ export default function FlashcardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safeIndex, prefs.autoPlay]);
 
-  // Show loading state while fetching premium-level words
-  if (level > 1 && wordsLoading) {
+  // Show loading state while fetching words
+  if (wordsLoading) {
     return (
       <div className="min-h-full flex items-center justify-center">
         <div className="text-center space-y-3">
@@ -104,8 +100,8 @@ export default function FlashcardPage() {
     );
   }
 
-  // Show error/paywall for premium levels
-  if (level > 1 && wordsError) {
+  // Show error/paywall for all levels
+  if (wordsError) {
     const isPremiumError = (wordsError as { status?: number })?.status === 403;
     return (
       <div className="min-h-full flex items-center justify-center p-4">
@@ -118,7 +114,7 @@ export default function FlashcardPage() {
           </h2>
           <p className="text-muted-foreground text-sm">
             {isPremiumError
-              ? "HSK 2–6 requires a premium subscription. Upgrade to unlock all levels."
+              ? "All HSK levels require a premium subscription. Upgrade to unlock all 6 levels."
               : "Something went wrong. Please check your connection and try again."}
           </p>
           <button
@@ -185,7 +181,7 @@ export default function FlashcardPage() {
         </div>
 
         {/* Mobile category chips (lg: desktop sidebar takes over) */}
-        {isHsk1 && (
+        {categories.length > 1 && (
           <div className="flex lg:hidden gap-2 overflow-x-auto scrollbar-none px-4 pb-2.5">
             {categories.map((cat) => (
               <button
@@ -209,7 +205,7 @@ export default function FlashcardPage() {
       <div className="flex flex-1 w-full max-w-5xl mx-auto">
 
         {/* Desktop category sidebar — only visible at lg+ */}
-        {isHsk1 && (
+        {categories.length > 1 && (
           <aside className="hidden lg:flex flex-col gap-px w-44 shrink-0 pt-6 pr-3 pl-2 border-r border-border/40">
             <p className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-widest mb-3 px-3">
               Categories
@@ -239,7 +235,7 @@ export default function FlashcardPage() {
             <div>
               <div className="flex justify-between text-sm font-medium text-muted-foreground mb-2">
                 <span>
-                  {isHsk1 && activeCategory !== ALL_CATEGORIES ? (
+                  {activeCategory !== ALL_CATEGORIES ? (
                     <span className="text-primary font-semibold">{activeCategory}</span>
                   ) : (
                     "Progress"
