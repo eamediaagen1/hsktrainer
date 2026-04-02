@@ -5,22 +5,23 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
-import MarketingPage    from "@/pages/MarketingPage";
-import LandingPage      from "@/pages/LandingPage";
-import AuthCallback     from "@/pages/AuthCallback";
-import DemoPage         from "@/pages/DemoPage";
-import DashboardPage    from "@/pages/DashboardPage";
-import LevelSelection   from "@/pages/LevelSelection";
-import FlashcardPage    from "@/pages/FlashcardPage";
-import ReviewPage       from "@/pages/ReviewPage";
-import QuizPage         from "@/pages/QuizPage";
-import PhrasesPage      from "@/pages/PhrasesPage";
-import StrokesPage      from "@/pages/StrokesPage";
-import ProgressPage     from "@/pages/ProgressPage";
-import SettingsPage     from "@/pages/SettingsPage";
-import AdminPage        from "@/pages/AdminPage";
-import AdminLoginPage   from "@/pages/AdminLoginPage";
-import { AppShell }     from "@/components/AppShell";
+import MarketingPage      from "@/pages/MarketingPage";
+import LandingPage        from "@/pages/LandingPage";
+import AuthCallback       from "@/pages/AuthCallback";
+import DemoPage           from "@/pages/DemoPage";
+import DashboardPage      from "@/pages/DashboardPage";
+import LevelSelection     from "@/pages/LevelSelection";
+import LevelOverviewPage  from "@/pages/LevelOverviewPage";
+import FlashcardPage      from "@/pages/FlashcardPage";
+import ReviewPage         from "@/pages/ReviewPage";
+import QuizPage           from "@/pages/QuizPage";
+import PhrasesPage        from "@/pages/PhrasesPage";
+import StrokesPage        from "@/pages/StrokesPage";
+import ProgressPage       from "@/pages/ProgressPage";
+import SettingsPage       from "@/pages/SettingsPage";
+import AdminPage          from "@/pages/AdminPage";
+import AdminLoginPage     from "@/pages/AdminLoginPage";
+import { AppShell }       from "@/components/AppShell";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 
 const queryClient = new QueryClient();
@@ -48,15 +49,21 @@ function ProtectedPages() {
   return (
     <AppShell>
       <Switch>
-        <Route path="/dashboard"         component={DashboardPage} />
-        <Route path="/levels"            component={LevelSelection} />
-        <Route path="/flashcards/:level" component={FlashcardPage} />
-        <Route path="/quiz/:level"       component={QuizPage} />
-        <Route path="/review"            component={ReviewPage} />
-        <Route path="/phrases"           component={PhrasesPage} />
-        <Route path="/strokes"           component={StrokesPage} />
-        <Route path="/progress"          component={ProgressPage} />
-        <Route path="/settings"          component={SettingsPage} />
+        <Route path="/dashboard"                component={DashboardPage} />
+        <Route path="/levels"                   component={LevelSelection} />
+        {/* Level overview — 3-section hub (Flashcards / Phrases / Exam) */}
+        <Route path="/levels/hsk/:level"        component={LevelOverviewPage} />
+        {/* Flashcards — with optional category pre-selection */}
+        <Route path="/flashcards/:level/:category" component={FlashcardPage} />
+        <Route path="/flashcards/:level"        component={FlashcardPage} />
+        {/* Quiz — full level or per-category (supports ?test=1 for short test) */}
+        <Route path="/quiz/:level/:category"    component={QuizPage} />
+        <Route path="/quiz/:level"              component={QuizPage} />
+        <Route path="/review"                   component={ReviewPage} />
+        <Route path="/phrases"                  component={PhrasesPage} />
+        <Route path="/strokes"                  component={StrokesPage} />
+        <Route path="/progress"                 component={ProgressPage} />
+        <Route path="/settings"                 component={SettingsPage} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>

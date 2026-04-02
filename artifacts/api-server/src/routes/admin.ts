@@ -245,6 +245,68 @@ router.get("/admin/purchases", async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /api/admin/grant-premium-by-email
+// Body: { email, reason }  — convenience: looks up user by email, then grants
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/admin/grant-premium-by-email", async (req, res) => {
+  const { email, reason } = req.body as { email?: string; reason?: string };
+
+  if (!email?.trim()) {
+    res.status(400).json({ error: "email is required" });
+    return;
+  }
+  if (!reason?.trim()) {
+    res.status(400).json({ error: "reason is required" });
+    return;
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const { data: profile, error: lookupError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, email, is_premium")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+
+  if (lookupError) {
+    res.status(500).json({ error: "DB error looking up user" });
+    return;
+  }
+  if (!profile) {
+    res.status(404).json({ error: `No user found with email: ${normalizedEmail}` });
+    return;
+  }
+  if (profile.is_premium) {
+    res.json({ success: true, message: "User already has premium", user_id: profile.id });
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const { error: updateError } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      is_premium: true,
+      premium_source: "admin",
+      premium_granted_at: now,
+      updated_at: now,
+    })
+    .eq("id", profile.id);
+
+  if (updateError) {
+    res.status(500).json({ error: "Failed to grant premium" });
+    return;
+  }
+
+  await writeLog(req.user!.id, profile.id, "grant_premium", reason, {
+    method: "by_email",
+    email: normalizedEmail,
+    granted_at: now,
+  });
+
+  res.json({ success: true, user_id: profile.id, email: normalizedEmail });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/admin/grant-premium
 // Body: { user_id, reason }  — reason is REQUIRED
 // ─────────────────────────────────────────────────────────────────────────────

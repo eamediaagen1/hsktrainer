@@ -153,7 +153,7 @@ export default function LevelSelection() {
                     ? "opacity-70 border-border/40 cursor-default"
                     : "border-border/60 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
                 )}
-                onClick={() => !isLocked && setLocation(`/flashcards/${level.id}`)}
+                onClick={() => !isLocked && setLocation(`/levels/hsk/${level.id}`)}
               >
                 {isLocked && (
                   <div className="absolute top-4 right-4">
@@ -184,7 +184,7 @@ export default function LevelSelection() {
                     disabled={isLocked}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!isLocked) setLocation(`/flashcards/${level.id}`);
+                      if (!isLocked) setLocation(`/levels/hsk/${level.id}`);
                     }}
                     className={cn(
                       "flex-1 py-2 rounded-xl text-sm font-medium transition-colors",
@@ -193,7 +193,7 @@ export default function LevelSelection() {
                         : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
                     )}
                   >
-                    {isLocked ? "Locked" : "Study"}
+                    {isLocked ? "Locked" : "Start"}
                   </button>
                   {!isLocked && (
                     <button
